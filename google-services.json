@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "180705123166",
+    "firebase_url": "https://trading-b21a8-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "trading-b21a8",
+    "storage_bucket": "trading-b21a8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:180705123166:android:ebe9e2e34eaeced3de4dcf",
+        "android_client_info": {
+          "package_name": "com.tradexgame.tradex"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBkYrzk9coEmpUlVzTfybxhICzr9jE9OyM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
