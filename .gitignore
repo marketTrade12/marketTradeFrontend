@@ -17,8 +17,10 @@ expo-env.d.ts
 *.p12
 *.key
 *.mobileprovision
-google-services.json
+*.json
 *.apk
+android/
+ios/
 # Metro
 .metro-health-check*
 

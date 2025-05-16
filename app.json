@@ -13,10 +13,10 @@
       "bundleIdentifier": "com.tradexgame.tradex"
     },
     "android": {
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff",
-        "googleServicesFile": "./google-services.json"
+        "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.tradexgame.tradex"
@@ -43,6 +43,10 @@
     },
     "extra": {
       "router": {},
+      "firebaseApiKey": "AIzaSyBkYrzk9coEmpUlVzTfybxhICzr9jE9OyM",
+      "firebaseProjectId": "trading-b21a8",
+      "firebaseMessagingSenderId": "180705123166",
+      "firebaseAppId": "1:180705123166:android:ebe9e2e34eaeced3de4dcf",
       "eas": {
         "projectId": "9b0c5f6f-1b9c-4707-9f2a-555002b9a1d8"
       }

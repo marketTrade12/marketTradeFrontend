@@ -1,26 +1,46 @@
-/**
- * Below are the colors that are used in the app. The colors are defined in the light and dark mode.
- * There are many other ways to style your app. For example, [Nativewind](https://www.nativewind.dev/), [Tamagui](https://tamagui.dev/), [unistyles](https://reactnativeunistyles.vercel.app), etc.
- */
-
-const tintColorLight = '#0a7ea4';
-const tintColorDark = '#fff';
+// constants/Colors.ts
 
 export const Colors = {
   light: {
-    text: '#11181C',
-    background: '#fff',
-    tint: tintColorLight,
-    icon: '#687076',
-    tabIconDefault: '#687076',
-    tabIconSelected: tintColorLight,
+    // Base Colors
+    background: "#FFFFFF", // Pure White
+    surface: "#F9FAFB", // Light Gray
+    text: "#111827", // Charcoal
+    textSecondary: "#6B7280", // Cool Gray
+    border: "#E5E7EB", // Light Gray Border
+    muted: "#F3F4F6", // Very Light Gray
+
+    // Accent Colors
+    primary: "#3B82F6", // Sky Blue
+    success: "#16A34A", // Emerald Green
+    danger: "#DC2626", // Crimson Red
+    warning: "#F59E0B", // Amber
+    info: "#0EA5E9", // Light Blue
+
+    // Additional UI Elements
+    icon: "#6B7280", // Icon Gray
+    tabIconDefault: "#6B7280", // Default Tab Icon
+    tabIconSelected: "#3B82F6", // Selected Tab Icon
   },
   dark: {
-    text: '#ECEDEE',
-    background: '#151718',
-    tint: tintColorDark,
-    icon: '#9BA1A6',
-    tabIconDefault: '#9BA1A6',
-    tabIconSelected: tintColorDark,
+    // Base Colors
+    background: "#0F172A", // Deep Navy
+    surface: "#1E293B", // Dark Slate
+    text: "#F9FAFB", // Off-White
+    textSecondary: "#94A3B8", // Grayish Blue
+    border: "#334155", // Slate Gray Border
+    muted: "#1E293B", // Dark Slate
+
+    // Accent Colors
+    primary: "#3B82F6", // Sky Blue
+    success: "#22C55E", // Lime Green
+    danger: "#EF4444", // Bright Red
+    warning: "#FBBF24", // Amber
+    info: "#38BDF8", // Light Blue
+
+    // Additional UI Elements
+    icon: "#94A3B8", // Icon Gray
+    tabIconDefault: "#94A3B8", // Default Tab Icon
+    tabIconSelected: "#3B82F6", // Selected Tab Icon
   },
 };
