@@ -1,0 +1,108 @@
+import { ActivePosition, Order, WalletStats } from "./types";
+
+export const walletStats: WalletStats = {
+  totalBalance: 1250.50,
+  totalInvested: 1000,
+  totalProfitLoss: 250.50,
+  profitLossPercentage: 25.05,
+  activePositions: 3,
+  openOrders: 2,
+};
+
+export const activePositions: ActivePosition[] = [
+  {
+    marketId: "market_bhelpuri",
+    marketTitle: "Will Bhelpuri win against Jhal Muri?",
+    invested: 500,
+    currentValue: 625,
+    outcome: "Yes",
+    shares: 500,
+    profitLoss: 125,
+    profitLossPercentage: 25,
+    isYes: true,
+  },
+  {
+    marketId: "market_eth_btc_2025",
+    marketTitle: "Will ETH outperform BTC in 2025?",
+    invested: 300,
+    currentValue: 375,
+    outcome: "No",
+    shares: 300,
+    profitLoss: 75,
+    profitLossPercentage: 25,
+    isYes: false,
+  },
+  {
+    marketId: "market_recession_2025",
+    marketTitle: "Will US hit recession in 2025?",
+    invested: 200,
+    currentValue: 250.50,
+    outcome: "Yes",
+    shares: 200,
+    profitLoss: 50.50,
+    profitLossPercentage: 25.25,
+    isYes: true,
+  },
+];
+
+export const orders: Order[] = [
+  // Open Orders
+  {
+    id: "order1",
+    marketId: "market_bhelpuri",
+    marketTitle: "Will Bhelpuri win against Jhal Muri?",
+    type: "buy",
+    status: "open",
+    amount: 100,
+    shares: 100,
+    orderPrice: 0.65,
+    currentPrice: 0.67,
+    timestamp: new Date(Date.now() - 3600000).toISOString(),
+    outcome: "Yes",
+    isYes: true,
+  },
+  {
+    id: "order2",
+    marketId: "market_eth_btc_2025",
+    marketTitle: "Will ETH outperform BTC in 2025?",
+    type: "sell",
+    status: "open",
+    amount: 50,
+    shares: 50,
+    orderPrice: 0.75,
+    currentPrice: 0.73,
+    timestamp: new Date(Date.now() - 7200000).toISOString(),
+    outcome: "No",
+    isYes: false,
+  },
+
+  // Executed Orders
+  {
+    id: "order3",
+    marketId: "market_recession_2025",
+    marketTitle: "Will US hit recession in 2025?",
+    type: "buy",
+    status: "executed",
+    amount: 200,
+    shares: 200,
+    orderPrice: 0.45,
+    currentPrice: 0.45,
+    timestamp: new Date(Date.now() - 86400000).toISOString(),
+    outcome: "Yes",
+    isYes: true,
+  },
+  {
+    id: "order4",
+    marketId: "market_iphone_usbc",
+    marketTitle: "Will iPhone 16 have USB-C?",
+    type: "sell",
+    status: "executed",
+    amount: 150,
+    shares: 150,
+    orderPrice: 0.85,
+    currentPrice: 0.85,
+    timestamp: new Date(Date.now() - 172800000).toISOString(),
+    outcome: "No",
+    isYes: false,
+  },
+]; 

@@ -16,6 +16,7 @@ export const Colors = {
     danger: "#DC2626", // Crimson Red
     warning: "#F59E0B", // Amber
     info: "#0EA5E9", // Light Blue
+    error: "#DC3545", // Bright Red
 
     // Additional UI Elements
     icon: "#6B7280", // Icon Gray
@@ -37,6 +38,7 @@ export const Colors = {
     danger: "#EF4444", // Bright Red
     warning: "#FBBF24", // Amber
     info: "#38BDF8", // Light Blue
+    error: "#DC3545", // Bright Red
 
     // Additional UI Elements
     icon: "#94A3B8", // Icon Gray

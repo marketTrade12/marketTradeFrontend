@@ -53,29 +53,27 @@ export default function TabLayout() {
           ),
         }}
       />
-      <Tabs.Screen
-        name="wallet"
-        options={{
-          title: "Wallet",
-          tabBarIcon: ({ color }) => (
-            <Icon
-              name="wallet-outline"
-              set="ionicons"
-              size={28}
-              color={color}
-            />
-          ),
-        }}
-      />
+
       <Tabs.Screen
         name="portfolio"
         options={{
-          title: "portfolio",
+          title: "Portfolio",
+          tabBarIcon: ({ color }) => (
+            <Icon name="trending-up" set="feather" size={28} color={color} />
+          ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: "Profile",
           tabBarIcon: ({ color }) => (
             <Icon name="user" set="feather" size={28} color={color} />
           ),
         }}
       />
+
       <Tabs.Screen
         name="support"
         options={{
@@ -83,6 +81,14 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => (
             <Icon name="headphones" set="feather" size={28} color={color} />
           ),
+        }}
+      />
+
+      {/* Hidden screens - accessible but not shown in tab bar */}
+      <Tabs.Screen
+        name="language-selection"
+        options={{
+          href: null, // This hides it from the tab bar
         }}
       />
     </Tabs>

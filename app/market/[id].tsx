@@ -1,297 +1,380 @@
 // pages/market/[id].tsx
 import { BottomSheetModal } from "@gorhom/bottom-sheet";
-import { useLocalSearchParams, useRouter } from "expo-router";
-import React, { useCallback, useRef, useState } from "react";
+import { useFocusEffect, useLocalSearchParams, useRouter } from "expo-router";
+import { StatusBar as ExpoStatusBar } from "expo-status-bar";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
+    Alert,
+    Clipboard,
+    Platform,
+    RefreshControl,
+    ScrollView,
+    Share,
+    StyleSheet,
+    Text,
+    View
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+// Components
+import ErrorState from "@/components/common/ErrorState";
+import LoadingState from "@/components/common/LoadingState";
+import MarketAboutSection from "@/components/market/MarketAboutSection";
+import MarketDetailHeader from "@/components/market/MarketDetailHeader";
+import MarketDetailStats from "@/components/market/MarketDetailStats";
+import MarketOutcomeCard from "@/components/market/MarketOutcomeCard";
 import TradeBottomSheet from "@/components/TradeBottomSheet";
-import Icon from "@/components/ui/Icon";
-import { Colors } from "@/constants/Colors";
-import { marketDetails } from "@/constants/marketDetails";
-import { useColorScheme } from "@/hooks/useColorScheme";
 
+// Constants & Types
+import { Colors } from "@/constants/Colors";
+import { marketData } from "@/constants/data";
+import { MarketDetail, marketDetails } from "@/constants/marketDetails";
+import { MarketItem, TradeAction } from "@/constants/types";
+import { useBookmarks } from "@/hooks/useBookmarks";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import { formatTimeRemaining } from "@/utils/marketUtils";
+
+// Market Data Adapter Class - OOP pattern for data transformation
+class MarketDataAdapter {
+  private static instance: MarketDataAdapter;
+  
+  static getInstance(): MarketDataAdapter {
+    if (!MarketDataAdapter.instance) {
+      MarketDataAdapter.instance = new MarketDataAdapter();
+    }
+    return MarketDataAdapter.instance;
+  }
+
+  // Transform new MarketItem to legacy MarketDetail format for compatibility
+  transformToLegacyFormat(marketItem: MarketItem): MarketDetail | null {
+    try {
+      if (marketItem.type === 'binary') {
+        return {
+          id: marketItem.id,
+          title: marketItem.title,
+          icon: marketItem.icon,
+          totalVolume: marketItem.totalVolume,
+          endDate: marketItem.endDate,
+          resolver: {
+            name: marketItem.resolutionSource,
+            address: `https://${marketItem.resolutionSource.toLowerCase().replace(/\s+/g, '')}.com`
+          },
+          tags: marketItem.tags,
+          outcomes: [
+            {
+              id: marketItem.yesOption.id,
+              label: marketItem.yesOption.label,
+              volume: marketItem.yesOption.volume24h,
+              chance: Math.round(marketItem.yesOption.price * 100),
+              yesPrice: Math.round(marketItem.yesOption.price * 100),
+              noPrice: Math.round(marketItem.noOption.price * 100),
+              orderBook: this.generateOrderBook(marketItem.yesOption.price)
+            }
+          ]
+        };
+      } else {
+        return {
+          id: marketItem.id,
+          title: marketItem.title,
+          icon: marketItem.icon,
+          totalVolume: marketItem.totalVolume,
+          endDate: marketItem.endDate,
+          resolver: {
+            name: marketItem.resolutionSource,
+            address: `https://${marketItem.resolutionSource.toLowerCase().replace(/\s+/g, '')}.com`
+          },
+          tags: marketItem.tags,
+          outcomes: marketItem.options.map(option => ({
+            id: option.id,
+            label: option.label,
+            volume: option.volume24h,
+            chance: Math.round(option.price * 100),
+            yesPrice: Math.round(option.price * 100),
+            noPrice: Math.round((1 - option.price) * 100),
+            orderBook: this.generateOrderBook(option.price)
+          }))
+        };
+      }
+    } catch (error) {
+      console.error('Error transforming market data:', error);
+      return null;
+    }
+  }
+
+  private generateOrderBook(midPrice: number) {
+    const mid = Math.round(midPrice * 100);
+    return {
+      bids: [
+        { price: Math.max(1, mid - 1), amount: 10 },
+        { price: Math.max(1, mid - 2), amount: 5 },
+        { price: Math.max(1, mid - 3), amount: 2 },
+      ],
+      asks: [
+        { price: Math.min(99, mid + 1), amount: 8 },
+        { price: Math.min(99, mid + 2), amount: 4 },
+        { price: Math.min(99, mid + 3), amount: 1 },
+      ],
+    };
+  }
+
+  // Get market data from either source
+  getMarketData(id: string): MarketDetail | null {
+    // First check legacy data
+    if (marketDetails[id]) {
+      return marketDetails[id];
+    }
+
+    // Then check new data and transform
+    const newMarketItem = marketData.find(market => market.id === id);
+    if (newMarketItem) {
+      return this.transformToLegacyFormat(newMarketItem);
+    }
+
+    return null;
+  }
+}
+
+// Custom Hook for Market Data Management
+const useMarketData = (marketId: string) => {
+  const [marketDetail, setMarketDetail] = useState<MarketDetail | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const adapter = MarketDataAdapter.getInstance();
+
+  const loadMarketData = useCallback(async () => {
+    try {
+      setError(null);
+      // Simulate network delay for better UX
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      const data = adapter.getMarketData(marketId);
+      if (data) {
+        setMarketDetail(data);
+      } else {
+        setError('Market not found');
+      }
+    } catch (err) {
+      setError('Failed to load market data');
+      console.error('Market loading error:', err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, [marketId, adapter]);
+
+  const refresh = useCallback(() => {
+    setRefreshing(true);
+    loadMarketData();
+  }, [loadMarketData]);
+
+  useEffect(() => {
+    loadMarketData();
+  }, [loadMarketData]);
+
+  return { marketDetail, loading, error, refreshing, refresh };
+};
+
+// Main Component
 export default function MarketDetailPage() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const scheme = useColorScheme() ?? "light";
-  const theme = Colors[scheme];
+  const colorScheme = useColorScheme();
+  const theme = Colors[colorScheme ?? "light"];
 
-  const data = marketDetails[id];
+  // State Management
+  const { marketDetail, loading, error, refreshing, refresh } = useMarketData(id);
+  const [tradeMeta, setTradeMeta] = useState<TradeAction | null>(null);
+  const [expandedOutcomeId, setExpandedOutcomeId] = useState<string | null>(null);
+  const { isBookmarked, toggleBookmark } = useBookmarks();
+
+  // Refs
   const sheetRef = useRef<BottomSheetModal>(null);
-  const [tradeMeta, setTradeMeta] = useState<{
-    detailId: string;
-    optionLabel: string;
-    actionType: "buy" | "sell";
-  } | null>(null);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  const openSheet = useCallback(
-    (optionLabel: string, actionType: "buy" | "sell") => {
-      setTradeMeta({ detailId: data.id, optionLabel, actionType });
-      sheetRef.current?.present();
-    },
-    [data]
+  // Focus effect for refreshing data when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      if (marketDetail) {
+        // Optionally refresh data when screen focuses
+        // refresh();
+      }
+    }, [marketDetail])
   );
 
-  if (!data) {
+  // Handlers
+  const handleTradePress = useCallback((optionLabel: string, actionType: "buy" | "sell", price?: number) => {
+    if (!marketDetail) return;
+
+    const tradeAction: TradeAction = {
+      detailId: marketDetail.id,
+      optionId: marketDetail.outcomes[0]?.id || 'default',
+      actionType,
+      label: optionLabel,
+      price: price || 0.5,
+      marketType: marketDetail.outcomes.length === 1 ? 'binary' : 'multi-outcome'
+    };
+
+    setTradeMeta(tradeAction);
+    sheetRef.current?.present();
+  }, [marketDetail]);
+
+  const handleShare = useCallback(async () => {
+    if (!marketDetail) return;
+
+    const marketUrl = `https://tradex.app/market/${marketDetail.id}`;
+    const shareContent = {
+      title: marketDetail.title,
+      message: `Check out this prediction market: ${marketDetail.title}\n\nVolume: ${marketDetail.totalVolume}\n\n${marketUrl}`,
+      url: marketUrl
+    };
+
+    try {
+      if (Platform.OS === 'ios') {
+        await Share.share({
+          title: shareContent.title,
+          message: shareContent.message,
+          url: shareContent.url
+        });
+      } else {
+        await Share.share({
+          title: shareContent.title,
+          message: shareContent.message
+        });
+      }
+    } catch (error) {
+      // Fallback to clipboard if share fails
+      try {
+        Clipboard.setString(`${shareContent.message}`);
+        Alert.alert("Link Copied", "Market link has been copied to clipboard");
+      } catch (clipboardError) {
+        Alert.alert("Share Error", "Unable to share this market");
+      }
+    }
+  }, [marketDetail]);
+
+  const handleBookmark = useCallback(() => {
+    if (!marketDetail) return;
+    toggleBookmark(marketDetail);
+  }, [marketDetail, toggleBookmark]);
+
+  const handleBackPress = useCallback(() => {
+    router.back();
+  }, [router]);
+
+  const toggleOutcomeExpansion = useCallback((outcomeId: string) => {
+    setExpandedOutcomeId(prev => prev === outcomeId ? null : outcomeId);
+  }, []);
+
+  // Render Loading State
+  if (loading) {
     return (
-      <View style={[styles.center, { backgroundColor: theme.background }]}>
-        <Text style={{ color: theme.text }}>Market not found</Text>
-      </View>
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+        <ExpoStatusBar style={colorScheme === 'dark' ? "light" : "dark"} />
+        <LoadingState message="Loading market details..." />
+      </SafeAreaView>
+    );
+  }
+
+  // Render Error State
+  if (error || !marketDetail) {
+    return (
+      <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+        <ExpoStatusBar style={colorScheme === 'dark' ? "light" : "dark"} />
+        <ErrorState 
+          message={error || "Market not found"} 
+          onRetry={refresh}
+          onBack={handleBackPress}
+        />
+      </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: theme.background }}>
-      <ScrollView contentContainerStyle={{ flexGrow: 1 }}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Icon
-            name={data.icon.name}
-            set={data.icon.set}
-            size={40}
-            color={theme.primary}
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: theme.background }]}>
+      <ExpoStatusBar style={colorScheme === 'dark' ? "light" : "dark"} />
+      
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={refresh}
+            tintColor={theme.primary}
+            colors={[theme.primary]}
           />
-          <Text style={[styles.title, { color: theme.text }]}>
-            {data.title}
-          </Text>
-          <View style={styles.headerIcons}>
-            <TouchableOpacity style={styles.iconBtn}>
-              <Icon name="link" set="feather" size={20} color={theme.icon} />
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.iconBtn}>
-              <Icon
-                name="bookmark"
-                set="feather"
-                size={20}
-                color={theme.icon}
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
+        }
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header Section */}
+        <MarketDetailHeader
+          title={marketDetail.title}
+          icon={marketDetail.icon}
+          volume={marketDetail.totalVolume}
+          endDate={marketDetail.endDate}
+          onShare={handleShare}
+          onBookmark={handleBookmark}
+          onBack={handleBackPress}
+          isBookmarked={isBookmarked(marketDetail.id)}
+        />
 
-        {/* Volume */}
-        <View style={styles.volumeRow}>
-          <Icon name="bar-chart-2" set="feather" size={16} color={theme.icon} />
-          <Text style={[styles.volumeText, { color: theme.textSecondary }]}>
-            {data.totalVolume} Vol.
-          </Text>
-        </View>
+        {/* Market Statistics */}
+        <MarketDetailStats
+          marketDetail={marketDetail}
+          timeRemaining={formatTimeRemaining(marketDetail.endDate)}
+        />
 
-        {/* Outcomes */}
-        {data.outcomes.map((o) => {
-          const isExpanded = expandedId === o.id;
-          return (
-            <View
-              key={o.id}
-              style={[
-                styles.outcomeBlock,
-                { borderColor: theme.border, backgroundColor: theme.surface },
-              ]}
-            >
-              {/* Basic Info */}
-              <View style={styles.outcomeInfo}>
-                <Icon
-                  name={o.icon?.name ?? "circle"}
-                  set={o.icon?.set ?? "feather"}
-                  size={24}
-                  color={theme.icon}
-                />
-                <View style={styles.outcomeText}>
-                  <Text style={[styles.outcomeLabel, { color: theme.text }]}>
-                    {o.label}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.outcomeVolume,
-                      { color: theme.textSecondary },
-                    ]}
-                  >
-                    {o.volume}
-                  </Text>
-                </View>
-                <Text style={[styles.outcomeChance, { color: theme.text }]}>
-                  {o.chance}%
-                </Text>
-              </View>
-
-              {/* Buy / Sell */}
-              <View style={styles.btnRow}>
-                <TouchableOpacity
-                  style={[styles.btnYes, { backgroundColor: theme.success }]}
-                  onPress={() => openSheet(o.label, "buy")}
-                >
-                  <Text style={[styles.btnText, { color: theme.surface }]}>
-                    Buy Yes {o.yesPrice}¢
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.btnNo, { backgroundColor: theme.danger }]}
-                  onPress={() => openSheet(o.label, "sell")}
-                >
-                  <Text style={[styles.btnText, { color: theme.surface }]}>
-                    Buy No {o.noPrice}¢
-                  </Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Order-Book Toggle */}
-              <TouchableOpacity
-                style={styles.orderToggle}
-                onPress={() => setExpandedId(isExpanded ? null : o.id)}
-              >
-                <Text
-                  style={[styles.orderToggleText, { color: theme.primary }]}
-                >
-                  Order Book
-                </Text>
-                <Icon
-                  name={isExpanded ? "chevron-up" : "chevron-down"}
-                  set="feather"
-                  size={20}
-                  color={theme.primary}
-                />
-              </TouchableOpacity>
-
-              {/* Collapsible Order-Book */}
-              {isExpanded && (
-                <View style={[styles.orderBook, { borderColor: theme.border }]}>
-                  {/* Bids */}
-                  <Text
-                    style={[styles.orderSectionTitle, { color: theme.text }]}
-                  >
-                    Bids
-                  </Text>
-                  <View style={styles.orderRowHeader}>
-                    <Text
-                      style={[
-                        styles.orderColHeader,
-                        { color: theme.textSecondary },
-                      ]}
-                    >
-                      Price
-                    </Text>
-                    <Text
-                      style={[
-                        styles.orderColHeader,
-                        { color: theme.textSecondary },
-                      ]}
-                    >
-                      Amount
-                    </Text>
-                  </View>
-                  {(o.orderBook?.bids ?? []).map((b, i) => (
-                    <View key={i} style={styles.orderRow}>
-                      <Text style={[styles.orderCol, { color: theme.text }]}>
-                        {b.price}
-                      </Text>
-                      <Text style={[styles.orderCol, { color: theme.text }]}>
-                        {b.amount}
-                      </Text>
-                    </View>
-                  ))}
-
-                  {/* Asks */}
-                  <Text
-                    style={[
-                      styles.orderSectionTitle,
-                      { color: theme.text, marginTop: 12 },
-                    ]}
-                  >
-                    Asks
-                  </Text>
-                  <View style={styles.orderRowHeader}>
-                    <Text
-                      style={[
-                        styles.orderColHeader,
-                        { color: theme.textSecondary },
-                      ]}
-                    >
-                      Price
-                    </Text>
-                    <Text
-                      style={[
-                        styles.orderColHeader,
-                        { color: theme.textSecondary },
-                      ]}
-                    >
-                      Amount
-                    </Text>
-                  </View>
-                  {(o.orderBook?.asks ?? []).map((a, i) => (
-                    <View key={i} style={styles.orderRow}>
-                      <Text style={[styles.orderCol, { color: theme.text }]}>
-                        {a.price}
-                      </Text>
-                      <Text style={[styles.orderCol, { color: theme.text }]}>
-                        {a.amount}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              )}
-            </View>
-          );
-        })}
-
-        {/* About */}
-        <View style={styles.about}>
+        {/* Outcomes Section */}
+        <View style={styles.outcomesSection}>
           <Text style={[styles.sectionTitle, { color: theme.text }]}>
-            About
+            {marketDetail.outcomes.length === 1 ? 'Market Options' : 'Market Outcomes'}
           </Text>
-          <View style={styles.infoRow}>
-            <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>
-              Volume
-            </Text>
-            <Text style={[styles.infoValue, { color: theme.text }]}>
-              {data.totalVolume}
-            </Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>
-              End Date
-            </Text>
-            <Text style={[styles.infoValue, { color: theme.text }]}>
-              {new Date(data.endDate).toDateString()}
-            </Text>
-          </View>
-          <View style={styles.infoRow}>
-            <Text style={[styles.infoLabel, { color: theme.textSecondary }]}>
-              Resolver
-            </Text>
-            <Text style={[styles.infoValue, { color: theme.primary }]}>
-              {data.resolver.name}
-            </Text>
-          </View>
+          
+          {/* Handle Binary Markets */}
+          {marketDetail.outcomes.length === 1 ? (
+            <MarketOutcomeCard
+              key={marketDetail.outcomes[0].id}
+              outcome={marketDetail.outcomes[0]}
+              isExpanded={expandedOutcomeId === marketDetail.outcomes[0].id}
+              onToggleExpansion={() => toggleOutcomeExpansion(marketDetail.outcomes[0].id)}
+              onTradePress={handleTradePress}
+              isLast={true}
+              isBinaryMarket={true}
+              totalOutcomes={1}
+            />
+          ) : (
+            /* Handle Multi-outcome Markets */
+            marketDetail.outcomes.map((outcome, index) => (
+              <MarketOutcomeCard
+                key={outcome.id}
+                outcome={outcome}
+                isExpanded={expandedOutcomeId === outcome.id}
+                onToggleExpansion={() => toggleOutcomeExpansion(outcome.id)}
+                onTradePress={handleTradePress}
+                isLast={index === marketDetail.outcomes.length - 1}
+                isBinaryMarket={false}
+                totalOutcomes={marketDetail.outcomes.length}
+              />
+            ))
+          )}
         </View>
 
-        {/* Back */}
-        <TouchableOpacity
-          style={[styles.backBtn, { backgroundColor: theme.primary }]}
-          onPress={() => router.back()}
-        >
-          <Text style={[styles.backText, { color: theme.surface }]}>Back</Text>
-        </TouchableOpacity>
+        {/* About Section */}
+        <MarketAboutSection marketDetail={marketDetail} />
+
+        {/* Bottom Spacer */}
+        <View style={styles.bottomSpacer} />
       </ScrollView>
 
-      {/* Trade Sheet */}
+      {/* Trade Bottom Sheet */}
       {tradeMeta && (
         <TradeBottomSheet
           ref={sheetRef}
           detailId={tradeMeta.detailId}
-          optionLabel={tradeMeta.optionLabel}
+          optionLabel={tradeMeta.label}
           actionType={tradeMeta.actionType}
-          onClose={() => {
-            sheetRef.current?.dismiss();
-            setTradeMeta(null);
-          }}
+          onClose={() => setTradeMeta(null)}
         />
       )}
     </SafeAreaView>
@@ -299,154 +382,26 @@ export default function MarketDetailPage() {
 }
 
 const styles = StyleSheet.create({
-  center: {
+  safeArea: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-  },
-  title: {
+  scrollView: {
     flex: 1,
-    fontSize: 20,
-    fontWeight: "700",
-    marginHorizontal: 12,
   },
-  headerIcons: {
-    flexDirection: "row",
-  },
-  iconBtn: {
-    marginLeft: 12,
-  },
-  volumeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    marginBottom: 8,
-  },
-  volumeText: {
-    marginLeft: 6,
-    fontSize: 14,
-  },
-  outcomeBlock: {
-    borderBottomWidth: 1,
-    padding: 16,
-  },
-  outcomeInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  outcomeText: {
-    flex: 1,
-    marginHorizontal: 12,
-  },
-  outcomeLabel: {
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  outcomeVolume: {
-    fontSize: 12,
-    marginTop: 2,
-  },
-  outcomeChance: {
-    fontSize: 18,
-    fontWeight: "700",
-  },
-  btnRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 12,
-  },
-  btnYes: {
-    flex: 1,
-    marginRight: 8,
-    paddingVertical: 10,
-    borderRadius: 6,
-  },
-  btnNo: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 6,
-  },
-  btnText: {
-    fontSize: 14,
-    fontWeight: "600",
-    textAlign: "center",
-  },
-  orderToggle: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 12,
-  },
-  orderToggleText: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  orderBook: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    marginTop: 8,
-  },
-  orderSectionTitle: {
-    fontSize: 14,
-    fontWeight: "600",
-    marginBottom: 4,
-  },
-  orderRowHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingBottom: 4,
-    borderBottomWidth: 1,
-  },
-  orderColHeader: {
-    width: "50%",
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  orderRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 4,
-  },
-  orderCol: {
-    width: "50%",
-    fontSize: 12,
-  },
-  about: {
-    padding: 16,
-    marginTop: 12,
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: Platform.OS === 'ios' ? 0 : 20,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    marginBottom: 12,
+    fontSize: 20,
+    fontWeight: '700',
+    marginBottom: 16,
+    paddingHorizontal: 16,
   },
-  infoRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 8,
+  outcomesSection: {
+    marginTop: 8,
   },
-  infoLabel: {
-    fontSize: 14,
-  },
-  infoValue: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  backBtn: {
-    margin: 16,
-    padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  backText: {
-    fontSize: 16,
-    fontWeight: "600",
+  bottomSpacer: {
+    height: 32,
   },
 });
