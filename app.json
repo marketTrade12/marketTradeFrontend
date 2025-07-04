@@ -12,7 +12,9 @@
       "resizeMode": "contain",
       "backgroundColor": "#8B5CF6"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.tradex"
@@ -23,7 +25,9 @@
         "backgroundColor": "#8B5CF6"
       },
       "package": "com.tradex",
-      "permissions": ["android.permission.INTERNET"]
+      "permissions": [
+        "android.permission.INTERNET"
+      ]
     },
     "web": {
       "bundler": "metro",
@@ -53,8 +57,9 @@
         "origin": false
       },
       "eas": {
-        "projectId": "your-project-id"
+        "projectId": "9b0c5f6f-1b9c-4707-9f2a-555002b9a1d8"
       }
-    }
+    },
+    "owner": "tradexgame"
   }
 }
