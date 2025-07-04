@@ -47,7 +47,9 @@
       [
         "onesignal-expo-plugin",
         {
-          "mode": "production"
+          "mode": "production",
+          "devTeam": "YOUR_APPLE_TEAM_ID",
+          "appId": "YOUR_ONESIGNAL_APP_ID"
         }
       ]
     ],
