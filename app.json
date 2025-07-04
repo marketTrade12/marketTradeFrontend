@@ -12,9 +12,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#8B5CF6"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["assets/images/*", "assets/fonts/*"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.tradex"
@@ -25,9 +23,7 @@
         "backgroundColor": "#8B5CF6"
       },
       "package": "com.tradex",
-      "permissions": [
-        "android.permission.INTERNET"
-      ]
+      "permissions": ["android.permission.INTERNET"]
     },
     "web": {
       "bundler": "metro",
