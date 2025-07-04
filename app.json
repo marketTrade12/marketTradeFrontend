@@ -1,40 +1,53 @@
 {
   "expo": {
-    "name": "tradex",
+    "name": "TradeX",
     "slug": "tradex",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "tradex",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#8B5CF6"
+    },
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.tradexgame.tradex"
+      "bundleIdentifier": "com.tradex"
     },
     "android": {
-      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#8B5CF6"
       },
-      "edgeToEdgeEnabled": true,
-      "package": "com.tradexgame.tradex"
+      "package": "com.tradex",
+      "permissions": ["android.permission.INTERNET"]
     },
     "web": {
       "bundler": "metro",
-      "output": "static",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
       "expo-router",
       [
-        "expo-splash-screen",
+        "expo-build-properties",
         {
-          "image": "./assets/images/logo/logo.png",
-          "imageWidth": 200,
-          "resizeMode": "contain",
-          "backgroundColor": "#8f5be8"
+          "android": {
+            "enableProguardInReleaseBuilds": true,
+            "enableShrinkResources": true,
+            "useLegacyPackaging": false
+          },
+          "ios": {
+            "deploymentTarget": "13.0"
+          }
+        }
+      ],
+      [
+        "onesignal-expo-plugin",
+        {
+          "mode": "production"
         }
       ]
     ],
@@ -42,15 +55,12 @@
       "typedRoutes": true
     },
     "extra": {
-      "router": {},
-      "firebaseApiKey": "AIzaSyBkYrzk9coEmpUlVzTfybxhICzr9jE9OyM",
-      "firebaseProjectId": "trading-b21a8",
-      "firebaseMessagingSenderId": "180705123166",
-      "firebaseAppId": "1:180705123166:android:ebe9e2e34eaeced3de4dcf",
+      "router": {
+        "origin": false
+      },
       "eas": {
-        "projectId": "9b0c5f6f-1b9c-4707-9f2a-555002b9a1d8"
+        "projectId": "your-project-id"
       }
-    },
-    "owner": "tradexgame"
+    }
   }
 }

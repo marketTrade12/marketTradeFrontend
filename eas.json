@@ -1,25 +1,42 @@
 {
   "cli": {
-    "version": ">= 16.4.0",
+    "version": ">= 5.9.1",
     "appVersionSource": "remote",
     "requireCommit": true
   },
   "build": {
     "development": {
       "developmentClient": true,
-      "distribution": "internal"
+      "distribution": "internal",
+      "android": {
+        "gradleCommand": ":app:assembleDebug"
+      },
+      "ios": {
+        "buildConfiguration": "Debug"
+      }
     },
     "preview": {
       "distribution": "internal",
       "android": {
-        "buildType": "apk"
+        "buildType": "apk",
+        "gradleCommand": ":app:assembleRelease",
+        "env": {
+          "FLIPPER_DISABLE": "1"
+        }
       }
     },
     "production": {
       "developmentClient": false,
       "distribution": "internal",
       "android": {
-        "buildType": "apk"
+        "buildType": "app-bundle",
+        "gradleCommand": ":app:bundleRelease",
+        "env": {
+          "FLIPPER_DISABLE": "1"
+        }
+      },
+      "ios": {
+        "buildConfiguration": "Release"
       }
     }
   },
