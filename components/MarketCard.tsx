@@ -1,409 +1,384 @@
 import Icon from "@/components/ui/Icon";
 import { Colors } from "@/constants/Colors";
 import { MarketItem, TradeAction } from "@/constants/types";
-import { useBookmarks } from '@/hooks/useBookmarks';
+import { useBookmarks } from "@/hooks/useBookmarks";
 import { useColorScheme } from "@/hooks/useColorScheme";
+import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 import React from "react";
-import { Pressable, ScrollView, Share, StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import {
+  Image,
+  Pressable,
+  Share,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 
-type MarketCardProps = {
+type Props = {
   item: MarketItem;
   onVote?: (meta: TradeAction) => void;
   hideVoting?: boolean;
 };
 
-export default function MarketCard({ item, onVote, hideVoting }: MarketCardProps) {
-  const router = useRouter();
+export default function MarketCard({ item, onVote, hideVoting }: Props) {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme ?? "light"];
   const { isBookmarked, toggleBookmark } = useBookmarks();
+  const router = useRouter();
 
-  const formatPriceChange = (change: number): { text: string; color: string } => {
-    const sign = change >= 0 ? '+' : '';
-    const percentage = (change * 100).toFixed(1);
-    return {
-      text: `${sign}${percentage}%`,
-      color: change >= 0 ? '#22C55E' : '#DC2626'
-    };
+  const formatTimeRemaining = (endDate: string) => {
+    const diffMs = new Date(endDate).getTime() - Date.now();
+    const days = Math.ceil(diffMs / 86_400_000);
+    if (days < 0) return "Ended";
+    if (days === 0) return "Today";
+    if (days === 1) return "1 day";
+    if (days < 30) return `${days} days`;
+    const m = Math.floor(days / 30);
+    return m === 1 ? "1 month" : `${m} months`;
   };
 
-  const formatTimeRemaining = (endDate: string): string => {
-    const now = new Date();
-    const end = new Date(endDate);
-    const diffMs = end.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-    
-    if (diffDays < 0) return "Ended";
-    if (diffDays === 0) return "Today";
-    if (diffDays === 1) return "1 day";
-    if (diffDays < 30) return `${diffDays} days`;
-    
-    const months = Math.floor(diffDays / 30);
-    return months === 1 ? "1 month" : `${months} months`;
-  };
+  const yesPct =
+    item.type === "binary" ? Math.round(item.yesOption.price * 100) : 0;
+  const noPct = item.type === "binary" ? 100 - yesPct : 0;
+  const multiPct = (price: number) => Math.round(price * 100);
 
   const handleShare = async () => {
     try {
-      let shareMessage = `Check out this market on TradeX:\n\n${item.title}\n\nCurrent Odds:\n`;
-      if (item.type === 'binary') {
-        shareMessage = shareMessage + `Yes: ${item.yesOption.priceDisplay}\nNo: ${item.noOption.priceDisplay}`;
+      let shareMessage = `Check out this market on TradeX:\n\n${item.title}\n\n`;
+      if (item.type === "binary") {
+        shareMessage += `Yes: ${item.yesOption.priceDisplay}\nNo: ${item.noOption.priceDisplay}`;
       } else {
-        shareMessage = shareMessage + item.options.map(opt => `${opt.label}: ${opt.priceDisplay}`).join('\n');
+        shareMessage += item.options
+          .map((opt) => `${opt.label}: ${opt.priceDisplay}`)
+          .join("\n");
       }
-      shareMessage = shareMessage + `\n\nVolume: ${item.totalVolume}`;
-
-      await Share.share({
-        message: shareMessage,
-        title: item.title,
-      });
-    } catch (error) {
-      console.error('Error sharing:', error);
+      shareMessage += `\n\nVolume: ${item.totalVolume}`;
+      await Share.share({ message: shareMessage, title: item.title });
+    } catch (e) {
+      console.error("Error sharing:", e);
     }
   };
 
-  const handlePress = () => {
-    router.push(`/market/${item.detailId}`);
-  };
-
-  const renderBinaryMarket = () => {
-    const market = item as Extract<MarketItem, { type: 'binary' }>;
-    const yesChange = formatPriceChange(market.yesOption.priceChange24h);
-    const noChange = formatPriceChange(market.noOption.priceChange24h);
-
-    return (
-      <View style={styles.optionsContainer}>
-        <View style={styles.binaryContainer}>
-          <TouchableOpacity
-            style={[styles.binaryOption, { backgroundColor: '#22C55E15' }]}
-            onPress={() => onVote?.({
-              detailId: market.detailId,
-              optionId: market.yesOption.id,
-              actionType: 'buy',
-              label: market.yesOption.label,
-              price: market.yesOption.price,
-              marketType: 'binary'
-            })}
-          >
-            <View style={styles.optionHeader}>
-              <Text style={[styles.optionLabel, { color: '#22C55E', fontWeight: '600' }]}>
-                YES
-              </Text>
-              <Text style={[styles.priceChange, { color: yesChange.color }]}>
-                {yesChange.text}
-              </Text>
-            </View>
-            <Text style={[styles.optionPrice, { color: '#22C55E' }]}>
-              {market.yesOption.priceDisplay}
-            </Text>
-            <Text style={[styles.optionVolume, { color: theme.textSecondary }]}>
-              {market.yesOption.volume24h}
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.binaryOption, { backgroundColor: '#DC262615' }]}
-            onPress={() => onVote?.({
-              detailId: market.detailId,
-              optionId: market.noOption.id,
-              actionType: 'buy',
-              label: market.noOption.label,
-              price: market.noOption.price,
-              marketType: 'binary'
-            })}
-          >
-            <View style={styles.optionHeader}>
-              <Text style={[styles.optionLabel, { color: '#DC2626', fontWeight: '600' }]}>
-                NO
-              </Text>
-              <Text style={[styles.priceChange, { color: noChange.color }]}>
-                {noChange.text}
-              </Text>
-            </View>
-            <Text style={[styles.optionPrice, { color: '#DC2626' }]}>
-              {market.noOption.priceDisplay}
-            </Text>
-            <Text style={[styles.optionVolume, { color: theme.textSecondary }]}>
-              {market.noOption.volume24h}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    );
-  };
-
-  const renderMultiOutcomeMarket = () => {
-    const market = item as Extract<MarketItem, { type: 'multi-outcome' }>;
-
-    return (
-      <ScrollView
-        style={styles.optionsContainer}
-        showsVerticalScrollIndicator={false}
-        nestedScrollEnabled
-      >
-        {market.options.map((option) => {
-          const priceChange = formatPriceChange(option.priceChange24h);
-          return (
-            <TouchableOpacity
-              key={option.id}
-              style={styles.multiOptionRow}
-              onPress={() => onVote?.({
-                detailId: market.detailId,
-                optionId: option.id,
-                actionType: 'buy',
-                label: option.label,
-                price: option.price,
-                marketType: 'multi-outcome'
-              })}
-            >
-              <View style={styles.multiOptionContent}>
-                <Text style={[styles.multiOptionLabel, { color: theme.text }]}>
-                  {option.label}
-                </Text>
-                <View style={styles.multiOptionRight}>
-                  <Text style={[styles.multiOptionPrice, { color: theme.primary }]}>
-                    {option.priceDisplay}
-                  </Text>
-                  <Text style={[styles.priceChange, { color: priceChange.color }]}>
-                    {priceChange.text}
-                  </Text>
-                </View>
-              </View>
-              <Text style={[styles.optionVolume, { color: theme.textSecondary }]}>
-                {option.volume24h} • {option.liquidity} liquidity
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-    );
-  };
-
-  const volumeChange = formatPriceChange(item.volumeChange24h / 100);
-  const timeRemaining = formatTimeRemaining(item.endDate);
-
   return (
     <Pressable
-      style={[styles.card, { backgroundColor: theme.surface }]}
-      onPress={handlePress}
+      onPress={() => router.push(`/market/${item.detailId}`)}
+      style={styles.wrapper}
     >
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <View style={styles.iconWrapper}>
-            <Icon
-              name={item.icon.name}
-              set={item.icon.set}
-              size={20}
-              color={theme.text}
-            />
-          </View>
-          <View style={styles.titleContainer}>
-            <Text style={[styles.title, { color: theme.text }]}>{item.title}</Text>
-            <View style={styles.metadataRow}>
-              <Text style={[styles.category, { color: theme.primary }]}>
-                {item.category.toUpperCase()}
+      <View style={styles.card}>
+        <View style={styles.cardContent}>
+          {item.imageUrl && (
+            <Image source={{ uri: item.imageUrl }} style={styles.thumbnail} />
+          )}
+
+          <Text style={[styles.title, { color: theme.text }]}>
+            {item.title}
+          </Text>
+          <Text style={[styles.subText, { color: theme.textSecondary }]}>
+            {item.category.toUpperCase()} • {formatTimeRemaining(item.endDate)}
+          </Text>
+
+          {!hideVoting && item.type === "binary" && (
+            <View style={styles.binaryRow}>
+              <TouchableOpacity
+                style={[styles.binaryBtn, { backgroundColor: "#EDEBFF" }]}
+                onPress={() =>
+                  onVote?.({
+                    detailId: item.detailId,
+                    optionId: item.yesOption.id,
+                    actionType: "buy",
+                    label: item.yesOption.label,
+                    price: item.yesOption.price,
+                    marketType: "binary",
+                  })
+                }
+              >
+                <Text style={[styles.binaryBtnText, { color: "#7C3AED" }]}>
+                  Yes ₹ {(item.yesOption.price * 10).toFixed(1)}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.binaryBtn, { backgroundColor: "#ECFDF5" }]}
+                onPress={() =>
+                  onVote?.({
+                    detailId: item.detailId,
+                    optionId: item.noOption.id,
+                    actionType: "buy",
+                    label: item.noOption.label,
+                    price: item.noOption.price,
+                    marketType: "binary",
+                  })
+                }
+              >
+                <Text style={[styles.binaryBtnText, { color: "#22C55E" }]}>
+                  No ₹ {(item.noOption.price * 10).toFixed(1)}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {!hideVoting && item.type === "multi-outcome" && (
+            <View style={styles.multiContainer}>
+              {item.options.map((opt) => (
+                <View key={opt.id} style={styles.multiRow}>
+                  <Text style={[styles.multiLabel, { color: theme.text }]}>
+                    {opt.label}
+                  </Text>
+                  <View style={styles.multiRightGroup}>
+                    <Text
+                      style={[styles.multiPct, { color: theme.textSecondary }]}
+                    >
+                      {multiPct(opt.price)}%
+                    </Text>
+                    <TouchableOpacity
+                      style={[styles.multiBtn, { backgroundColor: "#EDEBFF" }]}
+                      onPress={() =>
+                        onVote?.({
+                          detailId: item.detailId,
+                          optionId: opt.id,
+                          actionType: "buy",
+                          label: opt.label,
+                          price: opt.price,
+                          marketType: "multi-outcome",
+                        })
+                      }
+                    >
+                      <Text style={[styles.multiBtnText, { color: "#7C3AED" }]}>
+                        Yes ₹ {(opt.price * 10).toFixed(1)}
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.multiBtn, { backgroundColor: "#ECFDF5" }]}
+                      onPress={() =>
+                        onVote?.({
+                          detailId: item.detailId,
+                          optionId: opt.id,
+                          actionType: "buy",
+                          label: opt.label,
+                          price: opt.price,
+                          marketType: "multi-outcome",
+                        })
+                      }
+                    >
+                      <Text style={[styles.multiBtnText, { color: "#22C55E" }]}>
+                        No ₹ {(10 - multiPct(opt.price)).toFixed(1)}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
+
+          <View style={styles.tradersRow}>
+            {item.type === "binary" ? (
+              <>
+                <View style={styles.traderInfo}>
+                  <View
+                    style={[styles.traderDot, { backgroundColor: "#7C3AED" }]}
+                  />
+                  <Icon
+                    name="people"
+                    set="ionicons"
+                    size={14}
+                    color="#6B7280"
+                  />
+                  <Text
+                    style={[styles.traderText, { color: theme.textSecondary }]}
+                  >
+                    {" "}
+                    {yesPct}% traders
+                  </Text>
+                </View>
+                <View style={styles.traderInfo}>
+                  <View
+                    style={[styles.traderDot, { backgroundColor: "#22C55E" }]}
+                  />
+                  <Icon
+                    name="people"
+                    set="ionicons"
+                    size={14}
+                    color="#6B7280"
+                  />
+                  <Text
+                    style={[styles.traderText, { color: theme.textSecondary }]}
+                  >
+                    {" "}
+                    {noPct}% traders
+                  </Text>
+                </View>
+              </>
+            ) : (
+              <Text style={[styles.volume, { color: theme.textSecondary }]}>
+                Vol: {item.totalVolume}
               </Text>
-              <Text style={[styles.timeRemaining, { color: theme.textSecondary }]}>
-                • {timeRemaining}
-              </Text>
+            )}
+            <View style={styles.footerActions}>
+              <TouchableOpacity onPress={handleShare} style={styles.actionIcon}>
+                <Icon
+                  name="share"
+                  set="feather"
+                  size={20}
+                  color={theme.textSecondary}
+                />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => toggleBookmark(item)}
+                style={styles.actionIcon}
+              >
+                <Icon
+                  name={isBookmarked(item.id) ? "bookmark" : "bookmark-outline"}
+                  set="material"
+                  size={20}
+                  color={theme.textSecondary}
+                />
+              </TouchableOpacity>
             </View>
           </View>
         </View>
-        <View style={styles.statusBadge}>
-          <View style={[styles.statusDot, { 
-            backgroundColor: item.status === 'active' ? '#22C55E' : theme.textSecondary 
-          }]} />
-        </View>
-      </View>
 
-      {!hideVoting && (item.type === 'binary' ? renderBinaryMarket() : renderMultiOutcomeMarket())}
-
-      <View style={styles.footer}>
-        <View style={styles.footerLeft}>
-          <Text style={[styles.volume, { color: theme.text }]}>
-            {item.totalVolume} Vol.
-          </Text>
-          <Text style={[styles.volumeChange, { color: volumeChange.color }]}>
-            {volumeChange.text}
-          </Text>
-        </View>
-        <View style={styles.footerRight}>
-          <TouchableOpacity 
-            style={[styles.actionButton, { backgroundColor: theme.background }]}
-            onPress={handleShare}
+        {item.description && (
+          <LinearGradient
+            colors={["#F8FAFC", "#E2E8F0"]}
+            style={styles.readMoreFooter}
           >
-            <Icon name="share" set="feather" size={16} color={theme.text} />
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[
-              styles.actionButton, 
-              { backgroundColor: isBookmarked(item.id) ? theme.primary + '15' : theme.background }
-            ]}
-            onPress={() => toggleBookmark(item)}
-          >
-            <Icon 
-              name={isBookmarked(item.id) ? "bookmark" : "bookmark-outline"} 
-              set="material" 
-              size={16} 
-              color={isBookmarked(item.id) ? theme.primary : theme.text} 
-            />
-          </TouchableOpacity>
-        </View>
+            <Text style={[styles.description, { color: theme.textSecondary }]}>
+              {item.description.substring(0, 60)}…{" "}
+              <Text style={{ color: "#7C3AED", fontWeight: "600" }}>
+                read more
+              </Text>
+            </Text>
+          </LinearGradient>
+        )}
       </View>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
+  wrapper: {
+    marginHorizontal: 12,
+    marginVertical: 8,
+  },
   card: {
+    backgroundColor: "#fff",
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E2E8F0",
+    overflow: "hidden",
+  },
+  cardContent: {
     padding: 16,
-    margin: 8,
-    maxHeight: 280,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
+    position: "relative",
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    flex: 1,
-  },
-  iconWrapper: {
-    width: 32,
-    height: 32,
-    marginRight: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
+  thumbnail: {
+    position: "absolute",
+    top: 16,
+    right: 16,
+    width: 48,
+    height: 48,
     borderRadius: 8,
-    backgroundColor: '#F3F4F6',
-  },
-  titleContainer: {
-    flex: 1,
   },
   title: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: "600",
     lineHeight: 22,
-    marginBottom: 4,
+    marginRight: 64,
   },
-  metadataRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  category: {
+  subText: {
     fontSize: 12,
-    fontWeight: '600',
+    marginTop: 4,
+    marginBottom: 12,
   },
-  timeRemaining: {
+  binaryRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 12,
+  },
+  binaryBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: "center",
+    borderRadius: 12,
+    marginHorizontal: 4,
+  },
+  binaryBtnText: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  multiContainer: {
+    marginBottom: 12,
+  },
+  multiRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginVertical: 4,
+  },
+  multiLabel: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  multiRightGroup: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  multiPct: {
+    width: 40,
     fontSize: 12,
+    textAlign: "center",
   },
-  statusBadge: {
-    alignItems: 'center',
-    justifyContent: 'center',
+  multiBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 12,
+    marginLeft: 8,
   },
-  statusDot: {
+  multiBtnText: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  tradersRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  traderInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  traderDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
+    marginRight: 4,
   },
-  optionsContainer: {
-    maxHeight: 160,
-    marginBottom: 16,
-  },
-  binaryContainer: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  binaryOption: {
-    flex: 1,
-    padding: 12,
-    borderRadius: 12,
-    minHeight: 80,
-  },
-  optionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  optionLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  optionPrice: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  optionVolume: {
+  traderText: {
     fontSize: 12,
-  },
-  priceChange: {
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  multiOptionRow: {
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-  },
-  multiOptionContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  multiOptionLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    flex: 1,
-  },
-  multiOptionRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  multiOptionPrice: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  footerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    marginLeft: 4,
   },
   volume: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  volumeChange: {
     fontSize: 12,
-    fontWeight: '600',
   },
-  footerRight: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  footerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
   },
-  actionButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
+  actionIcon: {
+    marginLeft: 12,
+  },
+  readMoreFooter: {
+    borderTopWidth: 1,
+    borderTopColor: "#E2E8F0",
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomLeftRadius: 16,
+    borderBottomRightRadius: 16,
+  },
+  description: {
+    fontSize: 12,
+    lineHeight: 16,
   },
 });

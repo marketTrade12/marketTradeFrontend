@@ -1,42 +1,38 @@
-import Icon from '@/components/ui/Icon';
-import { Colors } from '@/constants/Colors';
-import { MarketCategory } from '@/constants/types';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Colors } from "@/constants/Colors";
+import { MarketCategory } from "@/constants/types";
+import { useColorScheme } from "@/hooks/useColorScheme";
+import React from "react";
+import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import Icon from "./ui/Icon";
 
-type CategoryType = 'all' | MarketCategory;
-
-interface CategoryFilterProps {
-  categories: CategoryType[];
-  selectedCategory: CategoryType;
-  onCategorySelect: (category: CategoryType) => void;
-}
+type Props = {
+  categories: (MarketCategory | "all")[];
+  selectedCategory: string;
+  onCategorySelect: (category: MarketCategory | "all") => void;
+};
 
 const getCategoryIcon = (category: string) => {
   switch (category) {
-    case 'all':
-      return { name: 'grid', set: 'feather' };
-    case 'sports':
-      return { name: 'activity', set: 'feather' };
-    case 'politics':
-      return { name: 'flag', set: 'feather' };
-    case 'crypto':
-      return { name: 'trending-up', set: 'feather' };
-    case 'economics':
-      return { name: 'bar-chart', set: 'feather' };
-    case 'technology':
-      return { name: 'smartphone', set: 'feather' };
-    case 'entertainment':
-      return { name: 'film', set: 'feather' };
-    case 'business':
-      return { name: 'briefcase', set: 'feather' };
-    case 'science':
-      return { name: 'zap', set: 'feather' };
-    case 'news':
-      return { name: 'globe', set: 'feather' };
+    case "sports":
+      return { name: "trophy", set: "feather" };
+    case "politics":
+      return { name: "gavel", set: "material" };
+    case "crypto":
+      return { name: "bitcoin", set: "fontawesome" };
+    case "economics":
+      return { name: "trending-up", set: "feather" };
+    case "technology":
+      return { name: "cpu", set: "feather" };
+    case "entertainment":
+      return { name: "film", set: "feather" };
+    case "business":
+      return { name: "briefcase", set: "feather" };
+    case "science":
+      return { name: "flask", set: "ionicons" };
+    case "news":
+      return { name: "newspaper", set: "ionicons" };
     default:
-      return { name: 'circle', set: 'feather' };
+      return { name: "grid", set: "feather" };
   }
 };
 
@@ -44,98 +40,71 @@ export default function CategoryFilter({
   categories,
   selectedCategory,
   onCategorySelect,
-}: CategoryFilterProps) {
+}: Props) {
   const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? 'light'];
-
-  const formatCategoryName = (category: string) => {
-    if (category === 'all') return 'All Markets';
-    return category.charAt(0).toUpperCase() + category.slice(1);
-  };
+  const theme = Colors[colorScheme ?? "light"];
 
   return (
-    <View style={[styles.wrapper, { backgroundColor: theme.background }]}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.container}
-        style={styles.scrollView}
-      >
-        <View style={styles.tabContainer}>
-          {categories.map((category, index) => {
-            const isSelected = selectedCategory === category;
-            const icon = getCategoryIcon(category);
-            const isFirst = index === 0;
-            const isLast = index === categories.length - 1;
-            
-            return (
-              <TouchableOpacity
-                key={category}
+    <View style={[styles.container, { backgroundColor: theme.background }]}>
+      {categories.map((category) => {
+        const isSelected = selectedCategory === category;
+        const icon = getCategoryIcon(category);
+        return (
+          <TouchableOpacity
+            key={category}
+            style={styles.tab}
+            onPress={() => onCategorySelect(category)}
+          >
+            <Icon
+              name={icon.name}
+              set={icon.set as any}
+              size={24}
+              color={isSelected ? theme.primary : "#9CA3AF"}
+            />
+            <Text
+              style={[
+                styles.tabText,
+                {
+                  color: isSelected ? theme.text : "#6B7280",
+                  fontWeight: isSelected ? "600" : "500",
+                },
+              ]}
+            >
+              {category.charAt(0).toUpperCase() + category.slice(1)}
+            </Text>
+            {isSelected && (
+              <View
                 style={[
-                  styles.tab,
-                  {
-                    backgroundColor: isSelected ? theme.primary : theme.surface,
-                    borderTopLeftRadius: isFirst ? 12 : 0,
-                    borderBottomLeftRadius: isFirst ? 12 : 0,
-                    borderTopRightRadius: isLast ? 12 : 0,
-                    borderBottomRightRadius: isLast ? 12 : 0,
-                  },
+                  styles.selectedIndicator,
+                  { backgroundColor: theme.primary },
                 ]}
-                onPress={() => onCategorySelect(category)}
-              >
-                <Icon
-                  name={icon.name}
-                  set={icon.set as any}
-                  size={16}
-                  color={isSelected ? '#FFFFFF' : theme.text}
-                />
-                <Text
-                  style={[
-                    styles.tabText,
-                    {
-                      color: isSelected ? '#FFFFFF' : theme.text,
-                    },
-                  ]}
-                >
-                  {formatCategoryName(category)}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </ScrollView>
+              />
+            )}
+          </TouchableOpacity>
+        );
+      })}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  wrapper: {
-    height: 60,
-    paddingVertical: 8,
-  },
-  scrollView: {
-    flex: 1,
-  },
   container: {
-    alignItems: 'center',
-    paddingVertical: 4,
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
+    flexDirection: "row",
     paddingVertical: 4,
   },
   tab: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    minHeight: 44,
+    alignItems: "center",
+    marginHorizontal: 12,
+    paddingBottom: 8,
   },
   tabText: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginLeft: 6,
+    fontSize: 12,
+    marginTop: 4,
   },
-}); 
+  selectedIndicator: {
+    height: 2,
+    width: 24,
+    borderRadius: 1,
+    marginTop: 4,
+  },
+});

@@ -1,28 +1,30 @@
 import { useColorScheme } from "@/hooks/useColorScheme";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import {
-    DarkTheme,
-    DefaultTheme,
-    ThemeProvider,
+  DarkTheme,
+  DefaultTheme,
+  ThemeProvider,
 } from "@react-navigation/native";
 import { useFonts } from "expo-font";
 import { Stack, useRouter, useSegments } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 import { LanguageProvider } from "../contexts/LanguageContext";
 import { useAuthStore } from "../utils/authStore";
 import "../utils/firebaseConfig";
 import { hasCompletedOnboarding } from "../utils/onboardingUtils";
+import SplashScreen from "./SplashScreen";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
-  const [isOnboardingComplete, setIsOnboardingComplete] = useState<boolean | null>(null);
+  const [isOnboardingComplete, setIsOnboardingComplete] = useState<
+    boolean | null
+  >(null);
   const segments = useSegments();
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
@@ -50,10 +52,19 @@ export default function RootLayout() {
     if (!isOnboardingComplete && !inOnboarding) {
       // Redirect to onboarding if not completed
       router.replace("/onboarding");
-    } else if (isOnboardingComplete && !user?.isLoggedIn && !inAuthGroup && !inOnboarding) {
+    } else if (
+      isOnboardingComplete &&
+      !user?.isLoggedIn &&
+      !inAuthGroup &&
+      !inOnboarding
+    ) {
       // User hasn't logged in yet, redirect to login
       router.replace("/(auth)/login");
-    } else if (isOnboardingComplete && user?.isLoggedIn && (inAuthGroup || inOnboarding)) {
+    } else if (
+      isOnboardingComplete &&
+      user?.isLoggedIn &&
+      (inAuthGroup || inOnboarding)
+    ) {
       // User is logged in but on auth or onboarding screens, redirect to home
       router.replace("/(tabs)");
     } else if (isOnboardingComplete && inOnboarding) {
@@ -63,13 +74,8 @@ export default function RootLayout() {
   }, [isOnboardingComplete, segments, router, user]);
 
   if (!loaded || isOnboardingComplete === null) {
-    // Async font loading only occurs in development.
-    // Show a loading indicator while checking onboarding status
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#4A80F0" />
-      </View>
-    );
+    // Show custom splash screen while loading fonts and onboarding status
+    return <SplashScreen />;
   }
 
   return (
@@ -82,7 +88,10 @@ export default function RootLayout() {
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="(tabs)" />
               <Stack.Screen name="(auth)" />
-              <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
+              <Stack.Screen
+                name="onboarding"
+                options={{ gestureEnabled: false }}
+              />
               <Stack.Screen name="+not-found" />
             </Stack>
             <StatusBar style="auto" />

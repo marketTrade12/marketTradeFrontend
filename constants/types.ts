@@ -1,17 +1,17 @@
 // constants/types.ts
-export type MarketCategory = 
-  | 'sports' 
-  | 'politics' 
-  | 'crypto' 
-  | 'entertainment' 
-  | 'economics' 
-  | 'technology' 
-  | 'weather' 
-  | 'business'
-  | 'science'
-  | 'news';
+export type MarketCategory =
+  | "sports"
+  | "politics"
+  | "crypto"
+  | "entertainment"
+  | "economics"
+  | "technology"
+  | "weather"
+  | "business"
+  | "science"
+  | "news";
 
-export type MarketStatus = 'active' | 'closed' | 'resolved' | 'paused';
+export type MarketStatus = "active" | "closed" | "resolved" | "paused";
 
 export type IconSet = "feather" | "ionicons" | "material" | "fontawesome";
 
@@ -34,7 +34,7 @@ export interface BaseOption {
 
 // Binary market (Yes/No only)
 export interface BinaryMarket {
-  type: 'binary';
+  type: "binary";
   id: string;
   title: string;
   description: string;
@@ -42,28 +42,29 @@ export interface BinaryMarket {
   category: MarketCategory;
   status: MarketStatus;
   icon: MarketIcon;
-  
+  imageUrl?: string; // Optional thumbnail image
+
   // Market timing
   endDate: string; // ISO date string
   createdDate: string;
-  
+
   // Market data
   totalVolume: string;
   volume24h: string;
   volumeChange24h: number; // Percentage change
   totalShares: number;
   liquidity: string;
-  
+
   // Yes/No options
   yesOption: BaseOption;
   noOption: BaseOption;
-  
+
   // Market metadata
   creator: string;
   resolutionSource: string;
   fee: number; // Platform fee percentage
   tags: string[];
-  
+
   // Social data
   participants: number;
   comments: number;
@@ -72,7 +73,7 @@ export interface BinaryMarket {
 
 // Multi-outcome market (multiple options)
 export interface MultiOutcomeMarket {
-  type: 'multi-outcome';
+  type: "multi-outcome";
   id: string;
   title: string;
   description: string;
@@ -80,27 +81,28 @@ export interface MultiOutcomeMarket {
   category: MarketCategory;
   status: MarketStatus;
   icon: MarketIcon;
-  
+  imageUrl?: string; // Optional thumbnail image
+
   // Market timing
   endDate: string;
   createdDate: string;
-  
+
   // Market data
   totalVolume: string;
   volume24h: string;
   volumeChange24h: number;
   totalShares: number;
   liquidity: string;
-  
+
   // Multiple options (each can be bought/sold)
   options: BaseOption[];
-  
+
   // Market metadata
   creator: string;
   resolutionSource: string;
   fee: number;
   tags: string[];
-  
+
   // Social data
   participants: number;
   comments: number;
@@ -114,18 +116,18 @@ export type MarketItem = BinaryMarket | MultiOutcomeMarket;
 export interface TradeAction {
   detailId: string;
   optionId: string;
-  actionType: 'buy' | 'sell';
+  actionType: "buy" | "sell";
   label: string;
   price: number;
-  marketType: 'binary' | 'multi-outcome';
+  marketType: "binary" | "multi-outcome";
 }
 
 // Market filters
 export interface MarketFilters {
   category?: MarketCategory;
   status?: MarketStatus;
-  sortBy?: 'volume' | 'newest' | 'ending_soon' | 'price_change';
-  timeRange?: '24h' | '7d' | '30d' | 'all';
+  sortBy?: "volume" | "newest" | "ending_soon" | "price_change";
+  timeRange?: "24h" | "7d" | "30d" | "all";
 }
 
 // Banner data for home page
@@ -160,8 +162,8 @@ export interface Order {
   id: string;
   marketId: string;
   marketTitle: string;
-  type: 'buy' | 'sell';
-  status: 'open' | 'executed' | 'cancelled';
+  type: "buy" | "sell";
+  status: "open" | "executed" | "cancelled";
   amount: number;
   shares: number;
   orderPrice: number;
@@ -190,4 +192,4 @@ export interface WalletStats {
   profitLossPercentage: number;
   activePositions: number;
   openOrders: number;
-} 
+}

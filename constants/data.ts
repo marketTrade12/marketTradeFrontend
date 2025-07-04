@@ -4,14 +4,16 @@ import { MarketItem } from "./types";
 export const marketData: MarketItem[] = [
   // Binary Markets (Yes/No only)
   {
-    type: 'binary',
+    type: "binary",
     id: "market_recession_2025",
     title: "Will US hit recession in 2025?",
-    description: "Will the United States officially enter a recession (defined as two consecutive quarters of negative GDP growth) in 2025?",
+    description:
+      "Will the United States officially enter a recession (defined as two consecutive quarters of negative GDP growth) in 2025?",
     detailId: "market_recession_2025",
-    category: 'economics',
-    status: 'active',
+    category: "economics",
+    status: "active",
     icon: { name: "trending-down", set: "feather" },
+    imageUrl: "https://picsum.photos/200/200?random=1",
     endDate: "2025-12-31T23:59:59Z",
     createdDate: "2024-01-15T10:00:00Z",
     totalVolume: "$4.4M",
@@ -27,7 +29,7 @@ export const marketData: MarketItem[] = [
       shares: 2948000,
       volume24h: "$28.1K",
       priceChange24h: 0.03,
-      liquidity: "$567K"
+      liquidity: "$567K",
     },
     noOption: {
       id: "recession_no",
@@ -37,7 +39,7 @@ export const marketData: MarketItem[] = [
       shares: 1452000,
       volume24h: "$17.1K",
       priceChange24h: -0.03,
-      liquidity: "$323K"
+      liquidity: "$323K",
     },
     creator: "EconAnalyst",
     resolutionSource: "Bureau of Economic Analysis",
@@ -45,18 +47,20 @@ export const marketData: MarketItem[] = [
     tags: ["economics", "GDP", "recession", "2025"],
     participants: 1247,
     comments: 89,
-    bookmarks: 234
+    bookmarks: 234,
   },
 
   {
-    type: 'binary',
+    type: "binary",
     id: "market_eth_btc_2025",
     title: "Will ETH outperform BTC in 2025?",
-    description: "Will Ethereum (ETH) have better price performance than Bitcoin (BTC) by December 31, 2025?",
+    description:
+      "Will Ethereum (ETH) have better price performance than Bitcoin (BTC) by December 31, 2025?",
     detailId: "market_eth_btc_2025",
-    category: 'crypto',
-    status: 'active',
+    category: "crypto",
+    status: "active",
     icon: { name: "trending-up", set: "feather" },
+    imageUrl: "https://picsum.photos/200/200?random=2",
     endDate: "2025-12-31T23:59:59Z",
     createdDate: "2024-01-10T14:30:00Z",
     totalVolume: "$980K",
@@ -72,7 +76,7 @@ export const marketData: MarketItem[] = [
       shares: 205800,
       volume24h: "$3.1K",
       priceChange24h: -0.02,
-      liquidity: "$89K"
+      liquidity: "$89K",
     },
     noOption: {
       id: "eth_outperform_no",
@@ -82,7 +86,7 @@ export const marketData: MarketItem[] = [
       shares: 774200,
       volume24h: "$9.2K",
       priceChange24h: 0.02,
-      liquidity: "$67K"
+      liquidity: "$67K",
     },
     creator: "CryptoTrader99",
     resolutionSource: "CoinGecko API",
@@ -90,18 +94,20 @@ export const marketData: MarketItem[] = [
     tags: ["crypto", "ethereum", "bitcoin", "performance"],
     participants: 892,
     comments: 156,
-    bookmarks: 201
+    bookmarks: 201,
   },
 
   {
-    type: 'binary',
+    type: "binary",
     id: "market_iphone_usbc",
     title: "Will iPhone 16 have USB-C?",
-    description: "Will Apple's iPhone 16 series come with USB-C charging port instead of Lightning?",
+    description:
+      "Will Apple's iPhone 16 series come with USB-C charging port instead of Lightning?",
     detailId: "market_iphone_usbc",
-    category: 'technology',
-    status: 'active',
+    category: "technology",
+    status: "active",
     icon: { name: "smartphone", set: "feather" },
+    imageUrl: "https://picsum.photos/200/200?random=3",
     endDate: "2024-09-30T23:59:59Z",
     createdDate: "2024-01-05T09:15:00Z",
     totalVolume: "$410K",
@@ -117,7 +123,7 @@ export const marketData: MarketItem[] = [
       shares: 381300,
       volume24h: "$7.2K",
       priceChange24h: 0.01,
-      liquidity: "$45K"
+      liquidity: "$45K",
     },
     noOption: {
       id: "iphone_usbc_no",
@@ -127,7 +133,7 @@ export const marketData: MarketItem[] = [
       shares: 28700,
       volume24h: "$1.7K",
       priceChange24h: -0.01,
-      liquidity: "$33K"
+      liquidity: "$33K",
     },
     creator: "TechInsider",
     resolutionSource: "Apple Official Announcement",
@@ -135,19 +141,20 @@ export const marketData: MarketItem[] = [
     tags: ["apple", "iphone", "usb-c", "technology"],
     participants: 567,
     comments: 203,
-    bookmarks: 145
+    bookmarks: 145,
   },
 
   // Multi-outcome Markets
   {
-    type: 'multi-outcome',
+    type: "multi-outcome",
     id: "market_nba_champion",
     title: "2024-25 NBA Champion",
     description: "Which team will win the 2024-25 NBA Championship?",
     detailId: "market_nba_champion",
-    category: 'sports',
-    status: 'active',
+    category: "sports",
+    status: "active",
     icon: { name: "activity", set: "feather" },
+    imageUrl: "https://picsum.photos/200/200?random=4",
     endDate: "2025-06-30T23:59:59Z",
     createdDate: "2024-10-01T12:00:00Z",
     totalVolume: "$1.67B",
@@ -164,7 +171,7 @@ export const marketData: MarketItem[] = [
         shares: 751500000,
         volume24h: "$89K",
         priceChange24h: 0.02,
-        liquidity: "$567K"
+        liquidity: "$567K",
       },
       {
         id: "nba_boston",
@@ -174,7 +181,7 @@ export const marketData: MarketItem[] = [
         shares: 350700000,
         volume24h: "$67K",
         priceChange24h: -0.01,
-        liquidity: "$423K"
+        liquidity: "$423K",
       },
       {
         id: "nba_cleveland",
@@ -184,7 +191,7 @@ export const marketData: MarketItem[] = [
         shares: 135270000,
         volume24h: "$23K",
         priceChange24h: 0.005,
-        liquidity: "$234K"
+        liquidity: "$234K",
       },
       {
         id: "nba_minnesota",
@@ -194,7 +201,7 @@ export const marketData: MarketItem[] = [
         shares: 125250000,
         volume24h: "$18K",
         priceChange24h: -0.003,
-        liquidity: "$189K"
+        liquidity: "$189K",
       },
       {
         id: "nba_knicks",
@@ -204,8 +211,8 @@ export const marketData: MarketItem[] = [
         shares: 121910000,
         volume24h: "$15K",
         priceChange24h: 0.001,
-        liquidity: "$156K"
-      }
+        liquidity: "$156K",
+      },
     ],
     creator: "SportsBook",
     resolutionSource: "NBA Official Results",
@@ -213,17 +220,18 @@ export const marketData: MarketItem[] = [
     tags: ["nba", "basketball", "championship", "sports"],
     participants: 5247,
     comments: 1089,
-    bookmarks: 1834
+    bookmarks: 1834,
   },
 
   {
-    type: 'multi-outcome',
+    type: "multi-outcome",
     id: "market_next_president",
     title: "Next US President 2024?",
-    description: "Who will be the next President of the United States following the 2024 election?",
+    description:
+      "Who will be the next President of the United States following the 2024 election?",
     detailId: "market_next_president",
-    category: 'politics',
-    status: 'active',
+    category: "politics",
+    status: "active",
     icon: { name: "flag", set: "feather" },
     endDate: "2024-11-05T23:59:59Z",
     createdDate: "2023-12-01T08:00:00Z",
@@ -241,7 +249,7 @@ export const marketData: MarketItem[] = [
         shares: 3652000,
         volume24h: "$78K",
         priceChange24h: 0.03,
-        liquidity: "$456K"
+        liquidity: "$456K",
       },
       {
         id: "pres_biden",
@@ -251,7 +259,7 @@ export const marketData: MarketItem[] = [
         shares: 3403000,
         volume24h: "$65K",
         priceChange24h: -0.02,
-        liquidity: "$398K"
+        liquidity: "$398K",
       },
       {
         id: "pres_harris",
@@ -261,7 +269,7 @@ export const marketData: MarketItem[] = [
         shares: 664000,
         volume24h: "$8K",
         priceChange24h: 0.005,
-        liquidity: "$89K"
+        liquidity: "$89K",
       },
       {
         id: "pres_desantis",
@@ -271,7 +279,7 @@ export const marketData: MarketItem[] = [
         shares: 332000,
         volume24h: "$3K",
         priceChange24h: -0.005,
-        liquidity: "$45K"
+        liquidity: "$45K",
       },
       {
         id: "pres_other",
@@ -281,8 +289,8 @@ export const marketData: MarketItem[] = [
         shares: 249000,
         volume24h: "$2K",
         priceChange24h: 0.001,
-        liquidity: "$34K"
-      }
+        liquidity: "$34K",
+      },
     ],
     creator: "PoliticalMarkets",
     resolutionSource: "Associated Press Election Results",
@@ -290,17 +298,18 @@ export const marketData: MarketItem[] = [
     tags: ["politics", "election", "president", "2024"],
     participants: 3456,
     comments: 2134,
-    bookmarks: 987
+    bookmarks: 987,
   },
 
   {
-    type: 'multi-outcome',
+    type: "multi-outcome",
     id: "market_fed_decision",
     title: "Fed Interest Rate Decision May 2024",
-    description: "What will the Federal Reserve's interest rate decision be in May 2024?",
+    description:
+      "What will the Federal Reserve's interest rate decision be in May 2024?",
     detailId: "market_fed_decision",
-    category: 'economics',
-    status: 'active',
+    category: "economics",
+    status: "active",
     icon: { name: "bar-chart", set: "feather" },
     endDate: "2024-05-01T19:00:00Z",
     createdDate: "2024-03-15T10:00:00Z",
@@ -318,7 +327,7 @@ export const marketData: MarketItem[] = [
         shares: 720000,
         volume24h: "$1.2K",
         priceChange24h: 0.001,
-        liquidity: "$23K"
+        liquidity: "$23K",
       },
       {
         id: "fed_25bp_decrease",
@@ -328,7 +337,7 @@ export const marketData: MarketItem[] = [
         shares: 1440000,
         volume24h: "$2.1K",
         priceChange24h: 0.002,
-        liquidity: "$34K"
+        liquidity: "$34K",
       },
       {
         id: "fed_no_change",
@@ -338,8 +347,8 @@ export const marketData: MarketItem[] = [
         shares: 69840000,
         volume24h: "$85.7K",
         priceChange24h: -0.003,
-        liquidity: "$833K"
-      }
+        liquidity: "$833K",
+      },
     ],
     creator: "FedWatcher",
     resolutionSource: "Federal Reserve Official Statement",
@@ -347,18 +356,18 @@ export const marketData: MarketItem[] = [
     tags: ["fed", "interest-rates", "monetary-policy", "economics"],
     participants: 2134,
     comments: 456,
-    bookmarks: 678
+    bookmarks: 678,
   },
 
   // Additional Binary Markets
   {
-    type: 'binary',
+    type: "binary",
     id: "market_india_t20_2025",
     title: "India to win ICC T20 World Cup 2025?",
     description: "Will India win the ICC T20 World Cup 2025?",
     detailId: "market_india_t20_2025",
-    category: 'sports',
-    status: 'active',
+    category: "sports",
+    status: "active",
     icon: { name: "trophy", set: "ionicons" },
     endDate: "2025-02-28T23:59:59Z",
     createdDate: "2024-11-01T12:00:00Z",
@@ -375,7 +384,7 @@ export const marketData: MarketItem[] = [
       shares: 1281000,
       volume24h: "$23K",
       priceChange24h: 0.04,
-      liquidity: "$198K"
+      liquidity: "$198K",
     },
     noOption: {
       id: "india_t20_no",
@@ -385,7 +394,7 @@ export const marketData: MarketItem[] = [
       shares: 819000,
       volume24h: "$11K",
       priceChange24h: -0.04,
-      liquidity: "$114K"
+      liquidity: "$114K",
     },
     creator: "CricketFan",
     resolutionSource: "ICC Official Results",
@@ -393,17 +402,18 @@ export const marketData: MarketItem[] = [
     tags: ["cricket", "india", "t20", "world-cup"],
     participants: 1876,
     comments: 432,
-    bookmarks: 567
+    bookmarks: 567,
   },
 
   {
-    type: 'binary',
+    type: "binary",
     id: "market_oil_100",
     title: "Crude oil to exceed $100 in 2024?",
-    description: "Will WTI crude oil price exceed $100 per barrel at any point in 2024?",
+    description:
+      "Will WTI crude oil price exceed $100 per barrel at any point in 2024?",
     detailId: "market_oil_100",
-    category: 'economics',
-    status: 'active',
+    category: "economics",
+    status: "active",
     icon: { name: "droplet", set: "feather" },
     endDate: "2024-12-31T23:59:59Z",
     createdDate: "2024-01-01T00:00:00Z",
@@ -420,7 +430,7 @@ export const marketData: MarketItem[] = [
       shares: 684000,
       volume24h: "$12K",
       priceChange24h: 0.015,
-      liquidity: "$134K"
+      liquidity: "$134K",
     },
     noOption: {
       id: "oil_100_no",
@@ -430,7 +440,7 @@ export const marketData: MarketItem[] = [
       shares: 1116000,
       volume24h: "$16K",
       priceChange24h: -0.015,
-      liquidity: "$100K"
+      liquidity: "$100K",
     },
     creator: "EnergyTrader",
     resolutionSource: "CME WTI Futures",
@@ -438,6 +448,6 @@ export const marketData: MarketItem[] = [
     tags: ["oil", "commodities", "energy", "wti"],
     participants: 945,
     comments: 123,
-    bookmarks: 234
-  }
+    bookmarks: 234,
+  },
 ];

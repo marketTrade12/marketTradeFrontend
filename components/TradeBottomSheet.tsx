@@ -2,22 +2,24 @@
 import Icon from "@/components/ui/Icon";
 import { Colors } from "@/constants/Colors";
 import { marketData } from "@/constants/data";
-import { marketBuySheetDetails } from "@/constants/marketBuySheetDetails";
 import { useColorScheme } from "@/hooks/useColorScheme";
 import {
-    BottomSheetBackdrop,
-    BottomSheetModal,
-    BottomSheetView,
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetView,
 } from "@gorhom/bottom-sheet";
+import { LinearGradient } from "expo-linear-gradient";
+import { useRouter } from "expo-router";
 import React, {
-    forwardRef,
-    useCallback,
-    useImperativeHandle,
-    useMemo,
-    useRef,
-    useState,
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
 } from "react";
-import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 type Props = {
   detailId: string;
@@ -28,16 +30,22 @@ type Props = {
 
 const TradeBottomSheet = forwardRef<BottomSheetModal, Props>(
   ({ detailId, optionLabel, actionType, onClose }, ref) => {
-    // theme setup
     const colorScheme = useColorScheme();
     const theme = Colors[colorScheme ?? "light"];
+    const router = useRouter();
 
-    // internal ref for the sheet
     const internalRef = useRef<BottomSheetModal>(null);
     useImperativeHandle(ref, () => internalRef.current!);
 
-    // only one snap point (feel free to add others)
-    const snapPoints = useMemo(() => ["60%"], []);
+    const snapPoints = useMemo(() => ["70%"], []);
+
+    // Add bottom inset for Android navigation bar
+    const bottomInset = useMemo(() => 0, []);
+
+    // Add state for showing deposit view
+    const [showDepositView, setShowDepositView] = useState(false);
+    const [depositAmount] = useState("200");
+
     const renderBackdrop = useCallback(
       (props: any) => (
         <BottomSheetBackdrop
@@ -45,94 +53,184 @@ const TradeBottomSheet = forwardRef<BottomSheetModal, Props>(
           disappearsOnIndex={-1}
           appearsOnIndex={0}
           pressBehavior="close"
-          opacity={0.3}
+          opacity={0.5}
         />
       ),
       []
     );
+
     const onSheetChange = useCallback(
       (index: number) => {
-        if (index === -1) onClose();
+        if (index === -1) {
+          onClose();
+          setShowDepositView(false);
+        }
       },
       [onClose]
     );
 
-    // State for Buy/Sell toggle and quantity
-    const [selectedAction, setSelectedAction] = useState<"buy" | "sell">(actionType);
-    const [quantity, setQuantity] = useState(0);
+    // State for Yes/No selection and amount
+    const [selectedOption, setSelectedOption] = useState<"Yes" | "No">("No");
+    const [price, setPrice] = useState(4.5);
+    const [quantity, setQuantity] = useState(1);
 
-    // Get market data - try new data first, then fallback to legacy
+    // Get market data
     const getMarketInfo = () => {
-      // Check new data structure first
-      const newMarket = marketData.find(m => m.id === detailId);
-      if (newMarket) {
-        // Parse option label to extract the specific option and Yes/No choice
-        let optionTitle = optionLabel;
-        let specificPrice = 0.5;
-        
-        // Check if this is a multi-outcome option with "- Yes" or "- No" suffix
-        if (optionLabel.includes(' - Yes') || optionLabel.includes(' - No')) {
-          const parts = optionLabel.split(' - ');
-          const optionName = parts[0];
-          const yesNo = parts[1]; // "Yes" or "No"
-          
-          if (newMarket.type === 'multi-outcome') {
-            const option = newMarket.options.find(opt => opt.label === optionName);
-            if (option) {
-              // For Buy: use option price for Yes, (1-option.price) for No
-              // For Sell: use (1-option.price) for Yes, option.price for No
-              if (selectedAction === 'buy') {
-                specificPrice = yesNo === 'Yes' ? option.price : (1 - option.price);
-              } else {
-                specificPrice = yesNo === 'Yes' ? (1 - option.price) : option.price;
-              }
-              optionTitle = `${optionName} - ${yesNo}`;
-            }
-          }
-        } else if (newMarket.type === 'binary') {
-          // For binary markets, use the yes/no option pricing
-          if (optionLabel.toLowerCase().includes('yes')) {
-            specificPrice = selectedAction === 'buy' ? newMarket.yesOption.price : newMarket.noOption.price;
-          } else {
-            specificPrice = selectedAction === 'buy' ? newMarket.noOption.price : newMarket.yesOption.price;
-          }
-        }
-
+      const market = marketData.find((m) => m.id === detailId);
+      if (market && market.type === "binary") {
         return {
-          question: optionTitle, // Show the specific option, not main market title
-          marketTitle: newMarket.title, // Keep main title for reference
-          icon: newMarket.icon,
-          pricing: {
-            pricePerShare: specificPrice,
-            maxPayout: 500
-          }
+          title: market.title,
+          icon: market.icon,
+          yesPrice: 5.5,
+          noPrice: 4.5,
+          imageUrl: market.imageUrl,
         };
       }
-
-      // Fallback to legacy data
-      const legacyDetail = marketBuySheetDetails[detailId];
-      if (legacyDetail && legacyDetail.buyOptions) {
-        const pricing = legacyDetail.buyOptions[selectedAction === "buy" ? "yes" : "no"];
-        return {
-          question: legacyDetail.question,
-          marketTitle: legacyDetail.question,
-          icon: legacyDetail.icon,
-          pricing
-        };
-      }
-
-      // Default fallback
       return {
-        question: optionLabel || "Market",
-        marketTitle: "Market",
-        icon: { name: "activity", set: "feather" as const },
-        pricing: { pricePerShare: 0.5, maxPayout: 500 }
+        title:
+          'Will "Sitare zameen par" cross ₹100 crore at the box office in its first week?',
+        icon: { name: "film", set: "feather" as const },
+        yesPrice: 5.5,
+        noPrice: 4.5,
+        imageUrl:
+          "https://i.postimg.cc/8zMy85fQ/Screenshot-2024-07-20-at-10-53-15-AM.png",
       };
     };
 
     const marketInfo = getMarketInfo();
-    const total = marketInfo.pricing.pricePerShare * quantity;
-    const potential = Math.min(marketInfo.pricing.maxPayout, total * 2);
+
+    useEffect(() => {
+      if (selectedOption === "Yes") {
+        setPrice(marketInfo.yesPrice);
+      } else {
+        setPrice(marketInfo.noPrice);
+      }
+    }, [selectedOption, marketInfo.yesPrice, marketInfo.noPrice]);
+
+    const totalAmount = price * quantity;
+    const potentialReturn = 2500; // Fixed for now as shown in design
+    const availableBalance = 300;
+    const isDepositMode = totalAmount > availableBalance;
+
+    const handlePriceChange = (increment: boolean) => {
+      setPrice((prev) => {
+        const newPrice = prev + (increment ? 0.1 : -0.1);
+        if (newPrice >= 0.5 && newPrice <= 9.5) {
+          return parseFloat(newPrice.toFixed(2));
+        }
+        return prev;
+      });
+    };
+
+    const handleQuantityChange = (increment: boolean) => {
+      setQuantity((prev) => {
+        const newQuantity = prev + (increment ? 1 : -1);
+        if (newQuantity >= 1 && newQuantity <= 10) {
+          return newQuantity;
+        }
+        return prev;
+      });
+    };
+
+    const handleBuyPress = () => {
+      setShowDepositView(true);
+    };
+
+    const renderDepositView = () => (
+      <View style={styles.depositContainer}>
+        <View style={styles.depositHeader}>
+          <TouchableOpacity
+            style={[
+              styles.tab,
+              selectedOption === "Yes"
+                ? styles.yesTabActive
+                : styles.tabInactive,
+            ]}
+            disabled
+          >
+            <Text
+              style={[
+                styles.tabText,
+                selectedOption === "Yes"
+                  ? styles.yesTabTextActive
+                  : styles.tabTextInactive,
+              ]}
+            >
+              Yes
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.tab,
+              selectedOption === "No" ? styles.noTabActive : styles.tabInactive,
+            ]}
+            disabled
+          >
+            <Text
+              style={[
+                styles.tabText,
+                selectedOption === "No"
+                  ? styles.noTabTextActive
+                  : styles.tabTextInactive,
+              ]}
+            >
+              No
+            </Text>
+          </TouchableOpacity>
+
+          <View style={styles.marketInfoContainer}>
+            <Icon name="info" set="material" size={16} color={theme.text} />
+            <Text style={styles.marketText}>Market ↓</Text>
+          </View>
+        </View>
+
+        <View style={styles.marketSection}>
+          <Text style={styles.marketTitle}>{marketInfo.title}</Text>
+          <Image
+            source={{ uri: marketInfo.imageUrl }}
+            style={styles.marketImage}
+          />
+        </View>
+
+        <View style={styles.priceInfoContainer}>
+          <View style={styles.priceRow}>
+            <Text style={styles.priceText}>
+              Yes Current Price: ₹ {marketInfo.yesPrice}
+            </Text>
+            <Text style={styles.getAmountText}>Get ₹ 10</Text>
+          </View>
+          <View style={styles.priceRow}>
+            <Text style={styles.priceText}>
+              No Current Price: ₹ {marketInfo.noPrice}
+            </Text>
+            <Text style={styles.getAmountText}>Get ₹ 10</Text>
+          </View>
+        </View>
+
+        <View style={styles.addAmountContainer}>
+          <Text style={styles.addAmountLabel}>Add Amount</Text>
+          <Text style={styles.amountText}>₹ {depositAmount}</Text>
+          <Text style={styles.returnText}>Get 💰 ₹2500</Text>
+        </View>
+
+        <View style={styles.balanceContainer}>
+          <Text style={styles.balanceText}>Available Balance: ₹ 000</Text>
+          <Icon name="info" set="material" size={16} color="#9CA3AF" />
+        </View>
+
+        <TouchableOpacity
+          style={styles.depositButton}
+          onPress={() => router.push("/wallet")}
+        >
+          <Text style={styles.depositButtonText}>Deposit</Text>
+        </TouchableOpacity>
+
+        <Text style={styles.termsText}>
+          By proceeding, you agree to the{" "}
+          <Text style={styles.termsLink}>Terms & Condition</Text>.
+        </Text>
+      </View>
+    );
 
     return (
       <BottomSheetModal
@@ -142,171 +240,200 @@ const TradeBottomSheet = forwardRef<BottomSheetModal, Props>(
         enablePanDownToClose
         backdropComponent={renderBackdrop}
         onChange={onSheetChange}
+        bottomInset={bottomInset}
+        android_keyboardInputMode="adjustResize"
+        handleIndicatorStyle={{
+          backgroundColor: "#000",
+          width: 40,
+        }}
+        backgroundStyle={{
+          backgroundColor: "#E8E8E8",
+        }}
       >
         <BottomSheetView
-          style={[styles.container, { backgroundColor: theme.surface }]}
+          style={[styles.container, { backgroundColor: "#E8E8E8" }]}
         >
-          {/* 1) Top bar */}
-          <View style={styles.topBar}>
-            <TouchableOpacity>
-              <Text style={[styles.topBarText, { color: theme.textSecondary }]}>
-                {selectedAction === "buy" ? "Buy" : "Sell"} ▾
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity onPress={onClose}>
-              <Icon
-                name="x"
-                set="feather"
-                size={20}
-                color={theme.textSecondary}
-              />
-            </TouchableOpacity>
-          </View>
+          {showDepositView ? (
+            renderDepositView()
+          ) : (
+            <>
+              {/* Header with Yes/No tabs and Limit dropdown */}
+              <View style={styles.header}>
+                <View style={styles.tabContainer}>
+                  <TouchableOpacity
+                    style={[
+                      styles.tab,
+                      selectedOption === "Yes"
+                        ? styles.yesTabActive
+                        : styles.tabInactive,
+                    ]}
+                    onPress={() => setSelectedOption("Yes")}
+                  >
+                    <Text
+                      style={[
+                        styles.tabText,
+                        selectedOption === "Yes"
+                          ? styles.yesTabTextActive
+                          : styles.tabTextInactive,
+                      ]}
+                    >
+                      Yes
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[
+                      styles.tab,
+                      selectedOption === "No"
+                        ? styles.noTabActive
+                        : styles.tabInactive,
+                    ]}
+                    onPress={() => setSelectedOption("No")}
+                  >
+                    <Text
+                      style={[
+                        styles.tabText,
+                        selectedOption === "No"
+                          ? styles.noTabTextActive
+                          : styles.tabTextInactive,
+                      ]}
+                    >
+                      No
+                    </Text>
+                  </TouchableOpacity>
+                </View>
 
-          {/* 2) Market title + selected option */}
-          <View style={styles.marketHeader}>
-            <Icon
-              name={marketInfo.icon.name}
-              set={marketInfo.icon.set}
-              size={28}
-              color={theme.primary}
-            />
-            <View style={{ marginLeft: 12, flex: 1 }}>
-              <Text style={[styles.marketTitle, { color: theme.text }]}>
-                {marketInfo.marketTitle}
-              </Text>
-              <View style={styles.subHeader}>
-                <Text
-                  style={[styles.subHeaderText, { color: theme.textSecondary }]}
-                >
-                  {marketInfo.question}
-                </Text>
-                <Icon
-                  name="repeat"
-                  set="feather"
-                  size={14}
-                  color={theme.primary}
+                <View style={styles.limitContainer}>
+                  <Icon
+                    name="info"
+                    set="material"
+                    size={16}
+                    color={theme.text}
+                  />
+                  <Text style={styles.limitText}>Limit</Text>
+                  <Icon
+                    name="unfold-more"
+                    set="material"
+                    size={16}
+                    color={theme.text}
+                  />
+                </View>
+              </View>
+
+              {/* Market Title with Image */}
+              <View style={styles.marketSection}>
+                <Text style={styles.marketTitle}>{marketInfo.title}</Text>
+                <Image
+                  source={{ uri: marketInfo.imageUrl }}
+                  style={styles.marketImage}
                 />
               </View>
-            </View>
-          </View>
 
-          {/* 3) Buy/Sell Tabs */}
-          <View style={styles.tabContainer}>
-            <TouchableOpacity
-              style={[
-                styles.tab,
-                selectedAction === "buy" && styles.activeTab,
-                { 
-                  backgroundColor: selectedAction === "buy" ? theme.success + '15' : theme.background,
-                  borderColor: selectedAction === "buy" ? theme.success : theme.border
-                }
-              ]}
-              onPress={() => setSelectedAction("buy")}
-            >
-              <Text style={[
-                styles.tabText,
-                { color: selectedAction === "buy" ? theme.success : theme.textSecondary }
-              ]}>
-                Buy
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={[
-                styles.tab,
-                selectedAction === "sell" && styles.activeTab,
-                { 
-                  backgroundColor: selectedAction === "sell" ? theme.danger + '15' : theme.background,
-                  borderColor: selectedAction === "sell" ? theme.danger : theme.border
-                }
-              ]}
-              onPress={() => setSelectedAction("sell")}
-            >
-              <Text style={[
-                styles.tabText,
-                { color: selectedAction === "sell" ? theme.danger : theme.textSecondary }
-              ]}>
-                Sell
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* 4) Amount selector */}
-          <View style={styles.amountSection}>
-            <Text style={[styles.amountLabel, { color: theme.text }]}>
-              Amount
-            </Text>
-            <View style={styles.quantityRow}>
-              <TouchableOpacity
-                style={[
-                  styles.quantityBtn,
-                  { backgroundColor: theme.background, borderColor: theme.border },
-                ]}
-                onPress={() => setQuantity(Math.max(0, quantity - 1))}
-              >
-                <Text style={[styles.quantityBtnText, { color: theme.text }]}>
-                  -
+              {/* Current Price */}
+              <View style={styles.currentPriceSection}>
+                <Text style={styles.currentPriceText}>
+                  Yes Current Price: ₹ {marketInfo.yesPrice}
                 </Text>
-              </TouchableOpacity>
-              <Text style={[styles.quantityValue, { color: theme.text }]}>
-                {quantity}
-              </Text>
-              <TouchableOpacity
-                style={[
-                  styles.quantityBtn,
-                  { backgroundColor: theme.background, borderColor: theme.border },
-                ]}
-                onPress={() => setQuantity(quantity + 1)}
-              >
-                <Text style={[styles.quantityBtnText, { color: theme.text }]}>
-                  +
+                <Text style={styles.currentPriceText}>
+                  No Current Price: ₹ {marketInfo.noPrice}
                 </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
+              </View>
 
-          {/* 5) Price info */}
-          <View style={styles.priceSection}>
-            <View style={styles.priceRow}>
-              <Text style={[styles.priceLabel, { color: theme.textSecondary }]}>
-                Price per share
-              </Text>
-              <Text style={[styles.priceValue, { color: theme.text }]}>
-                ${marketInfo.pricing.pricePerShare.toFixed(2)}
-              </Text>
-            </View>
-            <View style={styles.priceRow}>
-              <Text style={[styles.priceLabel, { color: theme.textSecondary }]}>
-                Potential return
-              </Text>
-              <Text style={[styles.priceValue, { color: theme.success }]}>
-                ${potential.toFixed(2)}
-              </Text>
-            </View>
-          </View>
+              {/* Price Input */}
+              <View style={styles.priceInputContainer}>
+                <View style={styles.inputRow}>
+                  <View style={styles.inputHeader}>
+                    <Text style={styles.minMaxText}>Min: ₹0.5</Text>
+                    <Text style={styles.inputLabel}>Price</Text>
+                    <Text style={styles.minMaxText}>Max: ₹9.5</Text>
+                  </View>
+                  <View style={styles.inputControl}>
+                    <TouchableOpacity
+                      style={styles.controlButton}
+                      onPress={() => handlePriceChange(false)}
+                    >
+                      <Text style={styles.controlButtonText}>-</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.inputValue}>{price.toFixed(2)}</Text>
+                    <TouchableOpacity
+                      style={styles.controlButton}
+                      onPress={() => handlePriceChange(true)}
+                    >
+                      <Text style={styles.controlButtonText}>+</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
 
-          {/* 6) CTA button */}
-          <View style={styles.ctaContainer}>
-            <TouchableOpacity
-              style={[
-                styles.cta,
-                {
-                  backgroundColor:
-                    selectedAction === "buy" ? theme.success : theme.danger,
-                },
-              ]}
-            >
-              <Text style={[styles.ctaText, { color: theme.surface }]}>
-                {selectedAction === "buy" ? "Buy" : "Sell"} {marketInfo.question}
-              </Text>
-              <Text style={[styles.payout, { color: theme.surface }]}>
-                {quantity === 0
-                  ? "Login to Trade"
-                  : `Total: $${total.toFixed(2)} • Win $${potential.toFixed(2)}`}
-              </Text>
-            </TouchableOpacity>
-          </View>
+                {/* Quantity Input */}
+                <View style={styles.inputRow}>
+                  <View style={styles.inputHeader}>
+                    <Text style={styles.minMaxText}>Min: 1</Text>
+                    <Text style={styles.inputLabel}>Quantity</Text>
+                    <Text style={styles.minMaxText}>Max: 10</Text>
+                  </View>
+                  <View style={styles.inputControl}>
+                    <TouchableOpacity
+                      style={styles.controlButton}
+                      onPress={() => handleQuantityChange(false)}
+                    >
+                      <Text style={styles.controlButtonText}>-</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.inputValue}>{quantity}</Text>
+                    <TouchableOpacity
+                      style={styles.controlButton}
+                      onPress={() => handleQuantityChange(true)}
+                    >
+                      <Text style={styles.controlButtonText}>+</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+
+                {/* Total Amount */}
+                <View style={styles.totalAmountSection}>
+                  <Text style={styles.totalAmountLabel}>Total Amount</Text>
+                  <Text style={styles.totalAmountValue}>
+                    ₹ {totalAmount.toFixed(2)}
+                  </Text>
+                </View>
+
+                {/* Potential Return */}
+                <View style={styles.returnSection}>
+                  <Text style={styles.returnLabel}>
+                    Get 💰 ₹{potentialReturn}
+                  </Text>
+                </View>
+
+                {/* Available Balance */}
+                <View style={styles.balanceSection}>
+                  <Text style={styles.balanceText}>
+                    Available Balance: ₹{availableBalance}
+                  </Text>
+                  <Icon name="info" set="material" size={16} color="#9CA3AF" />
+                </View>
+
+                {/* CTA Button or Deposit */}
+                <TouchableOpacity onPress={handleBuyPress}>
+                  <LinearGradient
+                    colors={
+                      selectedOption === "Yes"
+                        ? ["#C4B5FD", "#8B5CF6"]
+                        : ["#86EFAC", "#22C55E"]
+                    }
+                    style={styles.buyButton}
+                  >
+                    <Text style={styles.buyButtonText}>
+                      Buy {selectedOption}
+                    </Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+
+                {/* Terms */}
+                <Text style={styles.termsText}>
+                  By proceeding, you agree to the{" "}
+                  <Text style={styles.termsLink}>Terms & Condition</Text>.
+                </Text>
+              </View>
+            </>
+          )}
         </BottomSheetView>
       </BottomSheetModal>
     );
@@ -317,130 +444,287 @@ TradeBottomSheet.displayName = "TradeBottomSheet";
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     paddingHorizontal: 16,
-    paddingBottom: 32,
+    paddingTop: 16,
+    backgroundColor: "#E8E8E8",
   },
-  topBar: {
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  tabContainer: {
+    flexDirection: "row",
+    backgroundColor: "#F3F4F6",
+    borderRadius: 8,
+    padding: 2,
+  },
+  tab: {
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 6,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  tabInactive: {
+    backgroundColor: "transparent",
+  },
+  yesTabActive: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#7C3AED",
+  },
+  noTabActive: {
+    backgroundColor: "#FFFFFF",
+    borderWidth: 1,
+    borderColor: "#22C55E",
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  yesTabTextActive: {
+    color: "#7C3AED",
+  },
+  noTabTextActive: {
+    color: "#22C55E",
+  },
+  tabTextInactive: {
+    color: "#6B7280",
+  },
+  limitContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  limitText: {
+    fontSize: 14,
+    fontWeight: "500",
+  },
+  marketSection: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 16,
+    padding: 12,
+  },
+  marketTitle: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: "600",
+    lineHeight: 22,
+  },
+  marketImage: {
+    width: 48,
+    height: 48,
+    borderRadius: 8,
+    marginLeft: 12,
+  },
+  currentPriceSection: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 20,
+  },
+  currentPriceText: {
+    fontSize: 14,
+    color: "#374151",
+  },
+  priceInputContainer: {
+    flex: 1,
+    backgroundColor: "#fff",
+    padding: 15,
+    borderRadius: 16,
+  },
+  inputRow: {
+    marginBottom: 20,
+  },
+  inputHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  minMaxText: {
+    fontSize: 12,
+    color: "#6B7280",
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#1F2937",
+  },
+  inputControl: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#F9FAFB",
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
+  },
+  controlButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#E5E7EB",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  controlButtonText: {
+    fontSize: 24,
+    fontWeight: "300",
+    color: "#1F2937",
+    lineHeight: 28,
+  },
+  inputValue: {
+    fontSize: 24,
+    fontWeight: "600",
+    color: "#1F2937",
+  },
+  totalAmountSection: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingVertical: 12,
-    marginBottom: 16,
+    borderTopWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: "#F3F4F6",
+    marginBottom: 8,
   },
-  topBarText: {
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  marketHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  marketTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-  },
-  subHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginTop: 4,
-  },
-  subHeaderText: {
+  totalAmountLabel: {
     fontSize: 14,
-    marginRight: 8,
+    color: "#374151",
   },
-  amountSection: {
-    marginBottom: 24,
-  },
-  amountLabel: {
+  totalAmountValue: {
     fontSize: 16,
     fontWeight: "600",
+    color: "#1F2937",
+  },
+  returnSection: {
+    alignItems: "center",
     marginBottom: 12,
   },
-  quantityRow: {
+  returnLabel: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#16A34A",
+  },
+  balanceSection: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    marginBottom: 16,
+    gap: 4,
   },
-  quantityBtn: {
-    width: 36,
-    height: 36,
+  balanceText: {
+    fontSize: 12,
+    color: "#6B7280",
+  },
+  buyButton: {
     borderRadius: 8,
-    borderWidth: 1,
+    paddingVertical: 14,
     alignItems: "center",
-    justifyContent: "center",
+    marginBottom: 12,
   },
-  quantityBtnText: {
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  quantityValue: {
-    fontSize: 20,
+  buyButtonText: {
+    fontSize: 16,
     fontWeight: "700",
-    marginHorizontal: 24,
-    minWidth: 50,
+    color: "#FFFFFF",
+  },
+  termsText: {
+    fontSize: 12,
+    color: "#6B7280",
     textAlign: "center",
   },
-  priceSection: {
-    marginBottom: 32,
+  termsLink: {
+    color: "#6D28D9",
+    textDecorationLine: "underline",
+  },
+  depositContainer: {
+    flex: 1,
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    padding: 16,
+  },
+  depositHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  marketInfoContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  marketText: {
+    fontSize: 14,
+    color: "#6B7280",
+    fontWeight: "500",
+  },
+  priceInfoContainer: {
+    marginVertical: 16,
   },
   priceRow: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 8,
+    marginBottom: 8,
   },
-  priceLabel: {
+  priceText: {
     fontSize: 14,
+    color: "#374151",
   },
-  priceValue: {
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  ctaContainer: {
-    marginBottom: 24,
-  },
-  cta: {
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 56,
-  },
-  ctaText: {
-    fontSize: 16,
-    fontWeight: "700",
-    marginBottom: 2,
-  },
-  payout: {
-    fontSize: 13,
+  getAmountText: {
+    fontSize: 14,
+    color: "#374151",
     fontWeight: "500",
-    opacity: 0.9,
   },
-  tabContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  addAmountContainer: {
     alignItems: "center",
-    marginBottom: 24,
-    gap: 12,
+    marginVertical: 24,
   },
-  tab: {
-    flex: 1,
-    paddingVertical: 12,
-    borderWidth: 2,
-    borderColor: "transparent",
-    borderRadius: 12,
+  addAmountLabel: {
+    fontSize: 16,
+    color: "#374151",
+    marginBottom: 16,
+  },
+  amountText: {
+    fontSize: 48,
+    fontWeight: "300",
+    color: "#111827",
+    marginBottom: 16,
+  },
+  returnText: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#16A34A",
+  },
+  balanceContainer: {
+    flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
+    gap: 4,
+    marginBottom: 24,
   },
-  activeTab: {
-    borderColor: "currentColor",
+  depositButton: {
+    backgroundColor: "#F59E0B",
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: "center",
+    marginBottom: 16,
   },
-  tabText: {
-    fontSize: 16,
-    fontWeight: "600",
+  depositButtonText: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
 });
 

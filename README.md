@@ -1,50 +1,221 @@
-# Welcome to your Expo app 👋
+# TradeX - Trading App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A modern trading application built with React Native and Expo.
 
-## Get started
+## 🚀 Getting Started
 
-1. Install dependencies
+### Prerequisites
 
-   ```bash
-   npm install
-   ```
+- Node.js (v16 or newer)
+- npm or yarn
+- Expo CLI (`npm install -g expo-cli`)
+- Android Studio (for Android development)
+- Xcode (for iOS development, macOS only)
 
-2. Start the app
+### Installation
 
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+1. Clone the repository:
 
 ```bash
-npm run reset-project
+git clone https://github.com/yourusername/tradex.git
+cd tradex
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+2. Install dependencies:
 
-## Learn more
+```bash
+npm install
+# or
+yarn install
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+3. Start the development server:
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+npx expo start
+```
 
-## Join the community
+## 📱 Building Apps
 
-Join our community of developers creating universal apps.
+### Android
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+#### Development Build
+
+```bash
+# Create development build
+npx expo run:android
+
+# Create specific variant
+npx expo run:android --variant development
+```
+
+#### Production APK
+
+```bash
+# Generate production APK
+eas build -p android --profile preview
+
+# Generate production AAB (Play Store)
+eas build -p android --profile production
+```
+
+### iOS
+
+```bash
+# Create development build
+npx expo run:ios
+
+# Build for App Store
+eas build -p ios --profile production
+```
+
+## 🛠️ Development Commands
+
+### Start Development Server
+
+```bash
+# Start Expo development server
+npx expo start
+
+# Start with clearing cache
+npx expo start -c
+
+# Start on specific platform
+npx expo start --android
+npx expo start --ios
+npx expo start --web
+```
+
+### Testing
+
+```bash
+# Run tests
+npm test
+
+# Run tests in watch mode
+npm test:watch
+```
+
+### Linting
+
+```bash
+# Run ESLint
+npm run lint
+
+# Fix ESLint issues
+npm run lint:fix
+```
+
+### Type Checking
+
+```bash
+# Run TypeScript compiler
+npm run tsc
+
+# Watch for type errors
+npm run tsc:watch
+```
+
+## 📦 EAS Build Commands
+
+```bash
+# Configure EAS
+eas build:configure
+
+# Build for internal testing
+eas build --profile development
+
+# Build for preview/testing
+eas build --profile preview
+
+# Build for production
+eas build --profile production
+
+# Submit to stores
+eas submit -p ios
+eas submit -p android
+```
+
+## 🔄 Update Dependencies
+
+```bash
+# Update Expo SDK
+npx expo-cli upgrade
+
+# Update other dependencies
+npx npm-check-updates -u
+npm install
+```
+
+## 📱 Device Commands
+
+```bash
+# Start on physical device
+npx expo start --localhost
+
+# Start on Android emulator
+npx expo start --android
+
+# Start on iOS simulator
+npx expo start --ios
+```
+
+## 🔧 Troubleshooting
+
+If you encounter build issues:
+
+1. Clear Metro bundler cache:
+
+```bash
+npx expo start -c
+```
+
+2. Reset Expo development client:
+
+```bash
+npx expo prebuild --clean
+```
+
+3. Clean Android build:
+
+```bash
+cd android
+./gradlew clean
+cd ..
+```
+
+4. Reset node_modules:
+
+```bash
+rm -rf node_modules
+npm install
+```
+
+## 📚 Environment Setup
+
+### Android Development
+
+1. Install Android Studio
+2. Install Android SDK
+3. Set up environment variables:
+
+```bash
+export ANDROID_HOME=$HOME/Library/Android/sdk
+export PATH=$PATH:$ANDROID_HOME/tools
+export PATH=$PATH:$ANDROID_HOME/tools/bin
+export PATH=$PATH:$ANDROID_HOME/platform-tools
+```
+
+### iOS Development (macOS only)
+
+1. Install Xcode
+2. Install Xcode Command Line Tools
+3. Install CocoaPods:
+
+```bash
+sudo gem install cocoapods
+```
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
