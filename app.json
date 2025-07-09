@@ -35,15 +35,16 @@
         "expo-build-properties",
         {
           "android": {
-            "enableProguardInReleaseBuilds": true,
-            "enableShrinkResources": true,
+            "enableProguardInReleaseBuilds": false,
+            "enableShrinkResources": false,
             "useLegacyPackaging": false
           },
           "ios": {
             "deploymentTarget": "15.1"
           }
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true
