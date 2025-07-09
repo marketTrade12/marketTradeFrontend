@@ -37,6 +37,9 @@
       },
       "ios": {
         "buildConfiguration": "Release"
+      },
+      "cache": {
+        "disabled": false
       }
     }
   },
