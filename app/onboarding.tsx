@@ -1,6 +1,6 @@
-import { useRouter } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import React, { useEffect, useRef, useState } from 'react';
+import { useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
   Dimensions,
@@ -12,38 +12,42 @@ import {
   Text,
   TouchableOpacity,
   View,
-} from 'react-native';
-import OnboardingImage from '../components/OnboardingImage';
-import { markOnboardingComplete } from '../utils/onboardingUtils';
+} from "react-native";
+import OnboardingImage from "../components/OnboardingImage";
+import { useAuthStore } from "../utils/authStore";
+import { markOnboardingComplete } from "../utils/onboardingUtils";
 
-const { width, height } = Dimensions.get('window');
+const { width, height } = Dimensions.get("window");
 
 // Define the slide content
 interface Slide {
   id: string;
-  imageType: 'welcome' | 'analytics' | 'security';
+  imageType: "welcome" | "analytics" | "security";
   title: string;
   description: string;
 }
 
 const slides: Slide[] = [
   {
-    id: '1',
-    imageType: 'welcome',
-    title: 'Welcome to TradeX',
-    description: 'Your one-stop platform for all trading needs with real-time market data and insights.',
+    id: "1",
+    imageType: "welcome",
+    title: "Welcome to TradeX",
+    description:
+      "Your one-stop platform for all trading needs with real-time market data and insights.",
   },
   {
-    id: '2',
-    imageType: 'analytics',
-    title: 'Advanced Analytics',
-    description: 'Get powerful tools and analytics to make informed trading decisions instantly.',
+    id: "2",
+    imageType: "analytics",
+    title: "Advanced Analytics",
+    description:
+      "Get powerful tools and analytics to make informed trading decisions instantly.",
   },
   {
-    id: '3',
-    imageType: 'security',
-    title: 'Secure Trading',
-    description: 'Trade with confidence knowing your data and investments are protected with top-level security.',
+    id: "3",
+    imageType: "security",
+    title: "Secure Trading",
+    description:
+      "Trade with confidence knowing your data and investments are protected with top-level security.",
   },
 ];
 
@@ -51,7 +55,7 @@ const Onboarding = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
   const router = useRouter();
-  
+
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const translateYAnim = useRef(new Animated.Value(50)).current;
@@ -101,7 +105,7 @@ const Onboarding = () => {
       ])
     ).start();
   }, []);
-  
+
   // Update progress animation when index changes
   useEffect(() => {
     Animated.timing(progressAnim, {
@@ -114,13 +118,13 @@ const Onboarding = () => {
 
   const renderItem = ({ item }: { item: Slide }) => {
     return (
-      <Animated.View 
+      <Animated.View
         style={[
           styles.slide,
-          { 
-            opacity: fadeAnim, 
-            transform: [{ translateY: translateYAnim }]
-          }
+          {
+            opacity: fadeAnim,
+            transform: [{ translateY: translateYAnim }],
+          },
         ]}
       >
         <Animated.View style={{ transform: [{ translateY: floatAnim }] }}>
@@ -134,7 +138,13 @@ const Onboarding = () => {
 
   const handleGetStarted = async () => {
     await markOnboardingComplete();
-    router.replace('/(tabs)');
+    const user = useAuthStore.getState().user;
+
+    if (!user?.isLoggedIn) {
+      router.replace("/(auth)/login");
+    } else {
+      router.replace("/(tabs)");
+    }
   };
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
@@ -146,7 +156,7 @@ const Onboarding = () => {
   // Calculate dynamic progress width
   const progressWidth = progressAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: ['33%', '100%'],
+    outputRange: ["33%", "100%"],
   });
 
   return (
@@ -167,12 +177,7 @@ const Onboarding = () => {
       />
       {/* Modern progress bar */}
       <View style={styles.progressContainer}>
-        <Animated.View 
-          style={[
-            styles.progressBar, 
-            { width: progressWidth }
-          ]} 
-        />
+        <Animated.View style={[styles.progressBar, { width: progressWidth }]} />
       </View>
       {/* Dot indicators */}
       <View style={styles.indicatorContainer}>
@@ -191,12 +196,12 @@ const Onboarding = () => {
           styles.buttonContainer,
           {
             opacity: buttonOpacityAnim,
-            transform: [{ scale: 1 }]
-          }
+            transform: [{ scale: 1 }],
+          },
         ]}
       >
-        <TouchableOpacity 
-          style={styles.button} 
+        <TouchableOpacity
+          style={styles.button}
           onPress={handleGetStarted}
           activeOpacity={0.8}
         >
@@ -210,87 +215,87 @@ const Onboarding = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#121212',
+    backgroundColor: "#121212",
   },
   backgroundGlow: {
-    position: 'absolute',
+    position: "absolute",
     top: -300,
     left: width / 2 - 150,
     width: 300,
     height: 300,
     borderRadius: 150,
-    backgroundColor: '#4A80F022',
+    backgroundColor: "#4A80F022",
     opacity: 0.5,
   },
   slide: {
     width,
     height,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingHorizontal: 20,
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
+    fontWeight: "bold",
+    color: "#FFFFFF",
     marginBottom: 16,
-    textAlign: 'center',
+    textAlign: "center",
     marginTop: 40,
   },
   description: {
     fontSize: 16,
-    color: '#CCCCCC',
-    textAlign: 'center',
+    color: "#CCCCCC",
+    textAlign: "center",
     paddingHorizontal: 30,
     lineHeight: 24,
     letterSpacing: 0.3,
   },
   progressContainer: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 160,
     left: 40,
     right: 40,
     height: 4,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     borderRadius: 2,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   progressBar: {
-    height: '100%',
-    backgroundColor: '#4A80F0',
+    height: "100%",
+    backgroundColor: "#4A80F0",
     borderRadius: 2,
   },
   indicatorContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'absolute',
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    position: "absolute",
     bottom: 120,
-    width: '100%',
+    width: "100%",
   },
   indicator: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#555555',
+    backgroundColor: "#555555",
     marginHorizontal: 6,
   },
   activeIndicator: {
     width: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
   },
   buttonContainer: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 50,
     left: 20,
     right: 20,
   },
   button: {
-    backgroundColor: '#4A80F0',
+    backgroundColor: "#4A80F0",
     borderRadius: 12,
     paddingVertical: 16,
-    alignItems: 'center',
-    shadowColor: '#4A80F0',
+    alignItems: "center",
+    shadowColor: "#4A80F0",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
@@ -298,10 +303,10 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontSize: 18,
-    color: '#FFFFFF',
-    fontWeight: 'bold',
+    color: "#FFFFFF",
+    fontWeight: "bold",
     letterSpacing: 0.5,
   },
 });
 
-export default Onboarding; 
+export default Onboarding;
