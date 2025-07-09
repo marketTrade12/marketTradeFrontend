@@ -14,7 +14,7 @@ type Props = {
 const getCategoryIcon = (category: string) => {
   switch (category) {
     case "sports":
-      return { name: "trophy", set: "feather" };
+      return { name: "award", set: "feather" };
     case "politics":
       return { name: "gavel", set: "material" };
     case "crypto":

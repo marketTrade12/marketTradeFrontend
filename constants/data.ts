@@ -451,3 +451,11 @@ export const marketData: MarketItem[] = [
     bookmarks: 234,
   },
 ];
+
+// Add test banner data
+export const testBanners = [
+  {
+    id: "market_3",
+    src: "https://example.com/banner1.jpg",
+  },
+];

@@ -54,7 +54,12 @@
       },
       "eas": {
         "projectId": "9b0c5f6f-1b9c-4707-9f2a-555002b9a1d8"
-      }
+      },
+      "firebaseApiKey": "AIzaSyBkYrzk9coEmpUlVzTfybxhICzr9jE9OyM",
+      "firebaseProjectId": "trading-b21a8",
+      "firebaseMessagingSenderId": "180705123166",
+      "firebaseAppId": "1:180705123166:android:ebe9e2e34eaeced3de4dcf",
+      "firebaseDatabaseURL": "https://trading-b21a8-default-rtdb.asia-southeast1.firebasedatabase.app"
     },
     "owner": "tradexgame"
   }

@@ -22,59 +22,59 @@ export default function RootLayout() {
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
   });
+  const [isInitialized, setIsInitialized] = useState(false);
   const [isOnboardingComplete, setIsOnboardingComplete] = useState<
     boolean | null
   >(null);
   const segments = useSegments();
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
+  const hydrated = useAuthStore((state) => state._hasHydrated);
 
+  // Handle initial loading of both auth and onboarding state
   useEffect(() => {
-    const checkOnboardingStatus = async () => {
-      const onboardingComplete = await hasCompletedOnboarding();
-      setIsOnboardingComplete(onboardingComplete);
-    };
+    async function initialize() {
+      try {
+        const onboardingComplete = await hasCompletedOnboarding();
+        setIsOnboardingComplete(onboardingComplete);
+        setIsInitialized(true);
+      } catch (error) {
+        console.error("Failed to initialize:", error);
+        // Set some defaults in case of error
+        setIsOnboardingComplete(false);
+        setIsInitialized(true);
+      }
+    }
 
-    checkOnboardingStatus();
-  }, []);
+    if (hydrated) {
+      initialize();
+    }
+  }, [hydrated]);
 
+  // Handle navigation after initialization
   useEffect(() => {
-    if (isOnboardingComplete === null) {
-      // Still loading
+    if (!isInitialized || !loaded) {
       return;
     }
 
     const inAuthGroup = segments[0] === "(auth)";
     const inOnboarding = segments[0] === "onboarding";
-    const inProtectedGroup = segments[0] === "(tabs)";
 
-    // Handle navigation based on auth status and onboarding completion
     if (!isOnboardingComplete && !inOnboarding) {
-      // Redirect to onboarding if not completed
       router.replace("/onboarding");
-    } else if (
-      isOnboardingComplete &&
-      !user?.isLoggedIn &&
-      !inAuthGroup &&
-      !inOnboarding
-    ) {
-      // User hasn't logged in yet, redirect to login
+    } else if (isOnboardingComplete && !user?.isLoggedIn && !inAuthGroup) {
       router.replace("/(auth)/login");
     } else if (
       isOnboardingComplete &&
       user?.isLoggedIn &&
       (inAuthGroup || inOnboarding)
     ) {
-      // User is logged in but on auth or onboarding screens, redirect to home
       router.replace("/(tabs)");
-    } else if (isOnboardingComplete && inOnboarding) {
-      // Onboarding is complete but user is on onboarding screen
-      router.replace(user?.isLoggedIn ? "/(tabs)" : "/(auth)/login");
     }
-  }, [isOnboardingComplete, segments, router, user]);
+  }, [isInitialized, loaded, isOnboardingComplete, segments, router, user]);
 
-  if (!loaded || isOnboardingComplete === null) {
-    // Show custom splash screen while loading fonts and onboarding status
+  // Show splash screen until everything is loaded
+  if (!loaded || !isInitialized || !hydrated) {
     return <SplashScreen />;
   }
 
