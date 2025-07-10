@@ -12,10 +12,22 @@
       "resizeMode": "contain",
       "backgroundColor": "#8B5CF6"
     },
-    "assetBundlePatterns": ["assets/images/*", "assets/fonts/*"],
+    "assetBundlePatterns": [
+      "assets/images/*",
+      "assets/fonts/*",
+      "assets/fonts/Inter-*.ttf"
+    ],
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.tradex"
+      "bundleIdentifier": "com.tradex",
+      "infoPlist": {
+        "UIAppFonts": [
+          "Inter-Regular.ttf",
+          "Inter-Medium.ttf",
+          "Inter-SemiBold.ttf",
+          "Inter-Bold.ttf"
+        ]
+      }
     },
     "android": {
       "adaptiveIcon": {

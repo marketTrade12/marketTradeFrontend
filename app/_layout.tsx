@@ -21,6 +21,10 @@ export default function RootLayout() {
   const colorScheme = useColorScheme();
   const [loaded] = useFonts({
     SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
+    "Inter-Regular": require("../assets/fonts/Inter-Regular.ttf"),
+    "Inter-Medium": require("../assets/fonts/Inter-Medium.ttf"),
+    "Inter-SemiBold": require("../assets/fonts/Inter-SemiBold.ttf"),
+    "Inter-Bold": require("../assets/fonts/Inter-Bold.ttf"),
   });
   const [isInitialized, setIsInitialized] = useState(false);
   const [isOnboardingComplete, setIsOnboardingComplete] = useState<

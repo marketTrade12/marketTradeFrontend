@@ -14,6 +14,7 @@ import {
   View,
 } from "react-native";
 import OnboardingImage from "../components/OnboardingImage";
+import { useTheme } from "../hooks/useThemeColor";
 import { useAuthStore } from "../utils/authStore";
 import { markOnboardingComplete } from "../utils/onboardingUtils";
 
@@ -55,6 +56,7 @@ const Onboarding = () => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const flatListRef = useRef<FlatList>(null);
   const router = useRouter();
+  const theme = useTheme();
 
   // Animation values
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -130,8 +132,34 @@ const Onboarding = () => {
         <Animated.View style={{ transform: [{ translateY: floatAnim }] }}>
           <OnboardingImage type={item.imageType} />
         </Animated.View>
-        <Text style={styles.title}>{item.title}</Text>
-        <Text style={styles.description}>{item.description}</Text>
+        <Text
+          style={[
+            styles.title,
+            {
+              color: theme.colors.text,
+              fontFamily: theme.typography.h1.fontFamily,
+              fontSize: theme.typography.h1.fontSize,
+              fontWeight: theme.typography.h1.fontWeight,
+              lineHeight: theme.typography.h1.lineHeight,
+            },
+          ]}
+        >
+          {item.title}
+        </Text>
+        <Text
+          style={[
+            styles.description,
+            {
+              color: theme.colors.textSecondary,
+              fontFamily: theme.typography.body1.fontFamily,
+              fontSize: theme.typography.body1.fontSize,
+              fontWeight: theme.typography.body1.fontWeight,
+              lineHeight: theme.typography.body1.lineHeight,
+            },
+          ]}
+        >
+          {item.description}
+        </Text>
       </Animated.View>
     );
   };
@@ -159,9 +187,101 @@ const Onboarding = () => {
     outputRange: ["33%", "100%"],
   });
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    backgroundGlow: {
+      position: "absolute",
+      top: -300,
+      left: width / 2 - 150,
+      width: 300,
+      height: 300,
+      borderRadius: 150,
+      backgroundColor: theme.colors.primary + "22",
+      opacity: 0.5,
+    },
+    slide: {
+      width,
+      height,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingHorizontal: theme.spacing.lg,
+    },
+    title: {
+      marginBottom: theme.spacing.md,
+      textAlign: "center",
+      marginTop: theme.spacing.xl,
+    },
+    description: {
+      textAlign: "center",
+      paddingHorizontal: theme.spacing.lg,
+      letterSpacing: 0.3,
+    },
+    progressContainer: {
+      position: "absolute",
+      bottom: 160,
+      left: theme.spacing.xl,
+      right: theme.spacing.xl,
+      height: 4,
+      backgroundColor: theme.colors.border,
+      borderRadius: theme.borderRadius.xs,
+      overflow: "hidden",
+    },
+    progressBar: {
+      height: "100%",
+      backgroundColor: theme.colors.primary,
+      borderRadius: theme.borderRadius.xs,
+    },
+    indicatorContainer: {
+      flexDirection: "row",
+      justifyContent: "center",
+      alignItems: "center",
+      position: "absolute",
+      bottom: 120,
+      width: "100%",
+    },
+    indicator: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: theme.colors.grey,
+      marginHorizontal: theme.spacing.xs,
+    },
+    activeIndicator: {
+      width: 16,
+      backgroundColor: theme.colors.primary,
+    },
+    buttonContainer: {
+      position: "absolute",
+      bottom: 50,
+      left: theme.spacing.lg,
+      right: theme.spacing.lg,
+    },
+    button: {
+      backgroundColor: theme.colors.primary,
+      borderRadius: theme.borderRadius.md,
+      paddingVertical: theme.spacing.md,
+      alignItems: "center",
+      ...theme.shadows.medium,
+    },
+    buttonText: {
+      fontSize: theme.typography.button.fontSize,
+      color: theme.colors.textInverse,
+      fontWeight: theme.typography.button.fontWeight,
+      fontFamily: theme.typography.button.fontFamily,
+      letterSpacing: 0.5,
+    },
+  } as const);
+
   return (
     <View style={styles.container}>
-      <StatusBar style="light" backgroundColor="#121212" translucent />
+      <StatusBar
+        style={theme.isLight ? "dark" : "light"}
+        backgroundColor={theme.colors.background}
+        translucent
+      />
       {/* Background gradient effect */}
       <View style={styles.backgroundGlow} />
       <FlatList
@@ -211,102 +331,5 @@ const Onboarding = () => {
     </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#121212",
-  },
-  backgroundGlow: {
-    position: "absolute",
-    top: -300,
-    left: width / 2 - 150,
-    width: 300,
-    height: 300,
-    borderRadius: 150,
-    backgroundColor: "#4A80F022",
-    opacity: 0.5,
-  },
-  slide: {
-    width,
-    height,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 20,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: "#FFFFFF",
-    marginBottom: 16,
-    textAlign: "center",
-    marginTop: 40,
-  },
-  description: {
-    fontSize: 16,
-    color: "#CCCCCC",
-    textAlign: "center",
-    paddingHorizontal: 30,
-    lineHeight: 24,
-    letterSpacing: 0.3,
-  },
-  progressContainer: {
-    position: "absolute",
-    bottom: 160,
-    left: 40,
-    right: 40,
-    height: 4,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    borderRadius: 2,
-    overflow: "hidden",
-  },
-  progressBar: {
-    height: "100%",
-    backgroundColor: "#4A80F0",
-    borderRadius: 2,
-  },
-  indicatorContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-    position: "absolute",
-    bottom: 120,
-    width: "100%",
-  },
-  indicator: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: "#555555",
-    marginHorizontal: 6,
-  },
-  activeIndicator: {
-    width: 16,
-    backgroundColor: "#FFFFFF",
-  },
-  buttonContainer: {
-    position: "absolute",
-    bottom: 50,
-    left: 20,
-    right: 20,
-  },
-  button: {
-    backgroundColor: "#4A80F0",
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: "center",
-    shadowColor: "#4A80F0",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  buttonText: {
-    fontSize: 18,
-    color: "#FFFFFF",
-    fontWeight: "bold",
-    letterSpacing: 0.5,
-  },
-});
 
 export default Onboarding;
