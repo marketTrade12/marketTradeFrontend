@@ -1,22 +1,22 @@
-import { MarketDetail } from '@/constants/marketDetails';
-import { MarketItem } from '@/constants/types';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useCallback, useEffect, useState } from 'react';
+import { MarketDetail } from "@/constants/marketDetails";
+import { MarketItem } from "@/constants/types";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useCallback, useEffect, useState } from "react";
 
-const BOOKMARKS_STORAGE_KEY = '@tradex_bookmarks';
+const BOOKMARKS_STORAGE_KEY = "@tradex_bookmarks";
 
 // Convert MarketDetail to MarketItem
 const convertToMarketItem = (detail: MarketDetail): MarketItem => {
   if (detail.outcomes.length === 1) {
     // Binary market
     return {
-      type: 'binary',
+      type: "binary",
       id: detail.id,
       title: detail.title,
       description: detail.title,
       detailId: detail.id,
-      category: 'news',
-      status: 'active',
+      category: "news",
+      status: "active",
       icon: detail.icon,
       endDate: detail.endDate,
       createdDate: new Date().toISOString(),
@@ -33,7 +33,7 @@ const convertToMarketItem = (detail: MarketDetail): MarketItem => {
         shares: 0,
         volume24h: detail.outcomes[0].volume,
         priceChange24h: 0,
-        liquidity: "$0"
+        liquidity: "$0",
       },
       noOption: {
         id: detail.outcomes[0].id + "_no",
@@ -43,7 +43,7 @@ const convertToMarketItem = (detail: MarketDetail): MarketItem => {
         shares: 0,
         volume24h: detail.outcomes[0].volume,
         priceChange24h: 0,
-        liquidity: "$0"
+        liquidity: "$0",
       },
       creator: detail.resolver.name,
       resolutionSource: detail.resolver.name,
@@ -51,18 +51,18 @@ const convertToMarketItem = (detail: MarketDetail): MarketItem => {
       tags: detail.tags || [],
       participants: 0,
       comments: 0,
-      bookmarks: 0
+      bookmarks: 0,
     };
   } else {
     // Multi-outcome market
     return {
-      type: 'multi-outcome',
+      type: "multi-outcome",
       id: detail.id,
       title: detail.title,
       description: detail.title,
       detailId: detail.id,
-      category: 'news',
-      status: 'active',
+      category: "news",
+      status: "active",
       icon: detail.icon,
       endDate: detail.endDate,
       createdDate: new Date().toISOString(),
@@ -71,7 +71,7 @@ const convertToMarketItem = (detail: MarketDetail): MarketItem => {
       volumeChange24h: 0,
       totalShares: 0,
       liquidity: "$0",
-      options: detail.outcomes.map(outcome => ({
+      options: detail.outcomes.map((outcome) => ({
         id: outcome.id,
         label: outcome.label,
         price: outcome.yesPrice / 100,
@@ -79,7 +79,7 @@ const convertToMarketItem = (detail: MarketDetail): MarketItem => {
         shares: 0,
         volume24h: outcome.volume,
         priceChange24h: 0,
-        liquidity: "$0"
+        liquidity: "$0",
       })),
       creator: detail.resolver.name,
       resolutionSource: detail.resolver.name,
@@ -87,7 +87,7 @@ const convertToMarketItem = (detail: MarketDetail): MarketItem => {
       tags: detail.tags || [],
       participants: 0,
       comments: 0,
-      bookmarks: 0
+      bookmarks: 0,
     };
   }
 };
@@ -108,14 +108,14 @@ export const useBookmarks = () => {
       if (storedBookmarks) {
         const markets = JSON.parse(storedBookmarks) as MarketItem[];
         setBookmarkedMarkets(markets);
-        setBookmarkedIds(new Set(markets.map(m => m.id)));
+        setBookmarkedIds(new Set(markets.map((m) => m.id)));
       } else {
         // Initialize with empty arrays if no bookmarks exist
         setBookmarkedMarkets([]);
         setBookmarkedIds(new Set());
       }
     } catch (error) {
-      console.error('Error loading bookmarks:', error);
+      console.error("Error loading bookmarks:", error);
       // Initialize with empty arrays on error
       setBookmarkedMarkets([]);
       setBookmarkedIds(new Set());
@@ -126,36 +126,52 @@ export const useBookmarks = () => {
 
   const saveBookmarks = async (markets: MarketItem[]) => {
     try {
-      await AsyncStorage.setItem(BOOKMARKS_STORAGE_KEY, JSON.stringify(markets));
+      await AsyncStorage.setItem(
+        BOOKMARKS_STORAGE_KEY,
+        JSON.stringify(markets)
+      );
     } catch (error) {
-      console.error('Error saving bookmarks:', error);
+      console.error("Error saving bookmarks:", error);
     }
   };
 
-  const toggleBookmark = useCallback(async (market: MarketDetail | MarketItem) => {
-    const marketId = market.id;
-    setBookmarkedMarkets(prev => {
-      const isCurrentlyBookmarked = bookmarkedIds.has(marketId);
-      let newMarkets: MarketItem[];
+  const toggleBookmark = useCallback(
+    async (market: MarketDetail | MarketItem | string) => {
+      const marketId = typeof market === "string" ? market : market.id;
+      setBookmarkedMarkets((prev) => {
+        const isCurrentlyBookmarked = bookmarkedIds.has(marketId);
+        let newMarkets: MarketItem[];
 
-      if (isCurrentlyBookmarked) {
-        newMarkets = prev.filter(m => m.id !== marketId);
-        bookmarkedIds.delete(marketId);
-      } else {
-        const marketItem = 'type' in market ? market : convertToMarketItem(market as MarketDetail);
-        newMarkets = [...prev, marketItem];
-        bookmarkedIds.add(marketId);
-      }
+        if (isCurrentlyBookmarked) {
+          newMarkets = prev.filter((m) => m.id !== marketId);
+          bookmarkedIds.delete(marketId);
+        } else {
+          if (typeof market === "string") {
+            // If just an ID is passed, we can't add to bookmarks without the full object
+            return prev;
+          }
+          const marketItem =
+            "type" in market
+              ? market
+              : convertToMarketItem(market as MarketDetail);
+          newMarkets = [...prev, marketItem];
+          bookmarkedIds.add(marketId);
+        }
 
-      // Save to storage
-      saveBookmarks(newMarkets);
-      return newMarkets;
-    });
-  }, [bookmarkedIds]);
+        // Save to storage
+        saveBookmarks(newMarkets);
+        return newMarkets;
+      });
+    },
+    [bookmarkedIds]
+  );
 
-  const isBookmarked = useCallback((marketId: string) => {
-    return bookmarkedIds.has(marketId);
-  }, [bookmarkedIds]);
+  const isBookmarked = useCallback(
+    (marketId: string) => {
+      return bookmarkedIds.has(marketId);
+    },
+    [bookmarkedIds]
+  );
 
   return {
     bookmarkedMarkets,
@@ -163,4 +179,4 @@ export const useBookmarks = () => {
     toggleBookmark,
     isBookmarked,
   };
-}; 
+};

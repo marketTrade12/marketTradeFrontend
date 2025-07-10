@@ -1,237 +1,243 @@
-import { useRouter } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import React, { useRef, useState } from 'react';
+import Icon from "@/components/ui/Icon";
+import { useTheme } from "@/hooks/useThemeColor";
+import { useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import React, { useMemo, useState } from "react";
 import {
-    ActivityIndicator,
-    Animated,
-    KeyboardAvoidingView,
-    Platform,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
-} from 'react-native';
-import { isValidIndianPhoneNumber, sendOtp } from '../../utils/authStore';
+  Alert,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
+import { useAuthStore } from "../../utils/authStore";
 
-export default function Login() {
-  const [phoneNumber, setPhoneNumber] = useState('');
+export default function LoginScreen() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
   const router = useRouter();
-  
-  // Animation values
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(50)).current;
+  const theme = useTheme();
+  const setUser = useAuthStore((state) => state.setUser);
 
-  // Start the animation when component mounts
-  React.useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
-
-  const handlePhoneChange = (text: string) => {
-    // Remove non-digits
-    const cleaned = text.replace(/\D/g, '');
-    setPhoneNumber(cleaned);
-    setError('');
-  };
-
-  const handleContinue = async () => {
-    if (!phoneNumber) {
-      setError('Please enter your phone number');
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert("Error", "Please fill in all fields");
       return;
     }
 
-    if (!isValidIndianPhoneNumber(phoneNumber)) {
-      setError('Please enter a valid 10-digit phone number');
-      return;
-    }
-
+    setLoading(true);
     try {
-      setLoading(true);
-      const success = await sendOtp(phoneNumber);
-      
-      if (success) {
-        // Navigate to OTP verification screen
-        router.push({
-          pathname: "/(auth)/verify",
-          params: { phoneNumber }
-        });
-      } else {
-        setError('Failed to send OTP. Please try again.');
-      }
+      // Simulate API call
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      // Set user in auth store
+      setUser({
+        id: "1",
+        email: email,
+        name: "John Doe",
+        isLoggedIn: true,
+      });
+
+      router.replace("/(tabs)");
     } catch (error) {
-      setError('Something went wrong. Please try again.');
+      Alert.alert("Error", "Invalid credentials");
     } finally {
       setLoading(false);
     }
   };
 
+  const dynamicStyles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          flex: 1,
+          backgroundColor: theme.colors.background,
+        },
+        content: {
+          flex: 1,
+          justifyContent: "center",
+          paddingHorizontal: theme.spacing.lg,
+        },
+        title: {
+          fontSize: theme.typography.h1.fontSize,
+          fontWeight: theme.typography.h1.fontWeight,
+          fontFamily: theme.typography.h1.fontFamily,
+          color: theme.colors.text,
+          textAlign: "center",
+          marginBottom: theme.spacing.sm,
+        },
+        subtitle: {
+          fontSize: theme.typography.body1.fontSize,
+          fontFamily: theme.typography.body1.fontFamily,
+          color: theme.colors.textSecondary,
+          textAlign: "center",
+          marginBottom: theme.spacing.xl,
+        },
+        inputContainer: {
+          marginBottom: theme.spacing.md,
+        },
+        label: {
+          fontSize: theme.typography.body1.fontSize,
+          fontWeight: theme.typography.body1.fontWeight,
+          fontFamily: theme.typography.body1.fontFamily,
+          color: theme.colors.text,
+          marginBottom: theme.spacing.xs,
+        },
+        inputWrapper: {
+          flexDirection: "row",
+          alignItems: "center",
+          backgroundColor: theme.colors.surface,
+          borderRadius: theme.borderRadius.md,
+          borderWidth: 1,
+          borderColor: theme.colors.border,
+          paddingHorizontal: theme.spacing.md,
+          minHeight: 52,
+        },
+        input: {
+          flex: 1,
+          fontSize: theme.typography.body1.fontSize,
+          fontFamily: theme.typography.body1.fontFamily,
+          color: theme.colors.text,
+          paddingVertical: theme.spacing.sm,
+        },
+        eyeButton: {
+          padding: theme.spacing.xs,
+        },
+        loginButton: {
+          backgroundColor: theme.colors.primary,
+          borderRadius: theme.borderRadius.md,
+          paddingVertical: theme.spacing.md,
+          alignItems: "center",
+          marginTop: theme.spacing.lg,
+          ...theme.shadows.medium,
+        },
+        loginButtonDisabled: {
+          backgroundColor: theme.colors.disabled,
+        },
+        loginButtonText: {
+          fontSize: theme.typography.button.fontSize,
+          fontWeight: theme.typography.button.fontWeight,
+          fontFamily: theme.typography.button.fontFamily,
+          color: theme.colors.textInverse,
+        },
+        forgotPasswordContainer: {
+          alignItems: "center",
+          marginTop: theme.spacing.lg,
+        },
+        forgotPasswordText: {
+          fontSize: theme.typography.body2.fontSize,
+          fontFamily: theme.typography.body2.fontFamily,
+          color: theme.colors.primary,
+        },
+        signupContainer: {
+          flexDirection: "row",
+          justifyContent: "center",
+          alignItems: "center",
+          marginTop: theme.spacing.xl,
+        },
+        signupText: {
+          fontSize: theme.typography.body1.fontSize,
+          fontFamily: theme.typography.body1.fontFamily,
+          color: theme.colors.textSecondary,
+        },
+        signupLink: {
+          fontSize: theme.typography.body1.fontSize,
+          fontWeight: theme.typography.body1.fontWeight,
+          fontFamily: theme.typography.body1.fontFamily,
+          color: theme.colors.primary,
+          marginLeft: theme.spacing.xs,
+        },
+      }),
+    [theme]
+  );
+
   return (
-    <KeyboardAvoidingView 
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
-    >
-      <StatusBar style="light" />
-      
-      <Animated.View 
-        style={[
-          styles.card, 
-          { 
-            opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }]
-          }
-        ]}
-      >
-        <Text style={styles.title}>Welcome to TradeX</Text>
-        <Text style={styles.subtitle}>Enter your phone number to continue</Text>
-        
-        <View style={styles.inputContainer}>
-          <View style={styles.prefixContainer}>
-            <Text style={styles.prefix}>+91</Text>
-          </View>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your 10-digit number"
-            keyboardType="phone-pad"
-            value={phoneNumber}
-            onChangeText={handlePhoneChange}
-            maxLength={10}
-            autoFocus
-          />
-        </View>
-        
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
-        
-        <TouchableOpacity 
-          style={[
-            styles.button,
-            (!phoneNumber || loading) && styles.buttonDisabled
-          ]} 
-          onPress={handleContinue}
-          disabled={!phoneNumber || loading}
-        >
-          {loading ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={styles.buttonText}>Continue</Text>
-          )}
-        </TouchableOpacity>
-        
-        <Text style={styles.termsText}>
-          By continuing, you agree to our{' '}
-          <Text style={styles.termsLink}>Terms & Conditions</Text> and{' '}
-          <Text style={styles.termsLink}>Privacy Policy</Text>
+    <SafeAreaView style={dynamicStyles.container}>
+      <StatusBar
+        style={theme.isLight ? "dark" : "light"}
+        backgroundColor={theme.colors.background}
+      />
+
+      <View style={dynamicStyles.content}>
+        <Text style={dynamicStyles.title}>Welcome Back</Text>
+        <Text style={dynamicStyles.subtitle}>
+          Sign in to your account to continue trading
         </Text>
-      </Animated.View>
-    </KeyboardAvoidingView>
+
+        <View style={dynamicStyles.inputContainer}>
+          <Text style={dynamicStyles.label}>Email</Text>
+          <View style={dynamicStyles.inputWrapper}>
+            <TextInput
+              style={dynamicStyles.input}
+              value={email}
+              onChangeText={setEmail}
+              placeholder="Enter your email"
+              placeholderTextColor={theme.colors.textMuted}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+          </View>
+        </View>
+
+        <View style={dynamicStyles.inputContainer}>
+          <Text style={dynamicStyles.label}>Password</Text>
+          <View style={dynamicStyles.inputWrapper}>
+            <TextInput
+              style={dynamicStyles.input}
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Enter your password"
+              placeholderTextColor={theme.colors.textMuted}
+              secureTextEntry={!showPassword}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <TouchableOpacity
+              style={dynamicStyles.eyeButton}
+              onPress={() => setShowPassword(!showPassword)}
+            >
+              <Icon
+                name={showPassword ? "eye-off" : "eye"}
+                set="feather"
+                size={20}
+                color={theme.colors.textMuted}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <TouchableOpacity
+          style={[
+            dynamicStyles.loginButton,
+            loading && dynamicStyles.loginButtonDisabled,
+          ]}
+          onPress={handleLogin}
+          disabled={loading}
+        >
+          <Text style={dynamicStyles.loginButtonText}>
+            {loading ? "Signing In..." : "Sign In"}
+          </Text>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={dynamicStyles.forgotPasswordContainer}>
+          <Text style={dynamicStyles.forgotPasswordText}>
+            Forgot your password?
+          </Text>
+        </TouchableOpacity>
+
+        <View style={dynamicStyles.signupContainer}>
+          <Text style={dynamicStyles.signupText}>Don't have an account?</Text>
+          <Pressable onPress={() => router.push("/(auth)/verify")}>
+            <Text style={dynamicStyles.signupLink}>Sign Up</Text>
+          </Pressable>
+        </View>
+      </View>
+    </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#121212',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 16,
-  },
-  card: {
-    width: '100%',
-    backgroundColor: '#1E1E1E',
-    borderRadius: 16,
-    padding: 24,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 5,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-    marginBottom: 12,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: '#CCCCCC',
-    marginBottom: 32,
-    textAlign: 'center',
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-    marginBottom: 24,
-  },
-  prefixContainer: {
-    backgroundColor: '#2A2A2A',
-    paddingHorizontal: 12,
-    paddingVertical: 16,
-    borderTopLeftRadius: 8,
-    borderBottomLeftRadius: 8,
-    justifyContent: 'center',
-  },
-  prefix: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  input: {
-    flex: 1,
-    backgroundColor: '#2A2A2A',
-    color: '#FFFFFF',
-    fontSize: 16,
-    paddingVertical: 16,
-    paddingHorizontal: 12,
-    borderTopRightRadius: 8,
-    borderBottomRightRadius: 8,
-  },
-  button: {
-    backgroundColor: '#4A80F0',
-    width: '100%',
-    paddingVertical: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  buttonDisabled: {
-    backgroundColor: '#4A80F080',
-  },
-  buttonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  errorText: {
-    color: '#FF5252',
-    marginBottom: 16,
-    marginTop: -16,
-    alignSelf: 'flex-start',
-  },
-  termsText: {
-    color: '#AAAAAA',
-    fontSize: 12,
-    textAlign: 'center',
-    marginTop: 24,
-  },
-  termsLink: {
-    color: '#4A80F0',
-    textDecorationLine: 'underline',
-  },
-}); 

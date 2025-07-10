@@ -1,83 +1,95 @@
 // components/Header.tsx
-import { Colors } from "@/constants/Colors";
-import { useColorScheme } from "@/hooks/useColorScheme";
-import { useRouter } from 'expo-router';
+import { useTheme } from "@/hooks/useThemeColor";
+import { useRouter } from "expo-router";
 import React from "react";
 import { StyleSheet, Text, TouchableOpacity, View } from "react-native";
-import Icon from '../ui/Icon';
+import Icon from "../ui/Icon";
 
 export default function Header() {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
+  const theme = useTheme();
   const router = useRouter();
 
+  const styles = StyleSheet.create({
+    container: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: theme.spacing.lg,
+      paddingVertical: theme.spacing.md,
+      backgroundColor: theme.colors.background,
+    },
+    logoContainer: {
+      // Logo styles
+    },
+    logoText: {
+      fontSize: theme.typography.h2.fontSize,
+      fontFamily: theme.typography.h2.fontFamily,
+      fontWeight: theme.typography.h2.fontWeight,
+      color: theme.colors.primary,
+    },
+    actions: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: theme.spacing.sm,
+    },
+    actionButton: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: theme.colors.surface,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+      borderRadius: theme.borderRadius.md,
+      gap: theme.spacing.xs,
+      ...theme.shadows.small,
+    },
+    actionText: {
+      fontSize: theme.typography.body2.fontSize,
+      fontFamily: theme.typography.body2.fontFamily,
+      color: theme.colors.text,
+      fontWeight: "500",
+    },
+  });
+
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]}>
+    <View style={styles.container}>
       {/* Left - Logo */}
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.logoContainer}
-        onPress={() => router.push('/(tabs)')}
+        onPress={() => router.push("/(tabs)")}
       >
-        <Text style={[styles.logoText, { color: theme.primary }]}>TradeX</Text>
+        <Text style={styles.logoText}>TradeX</Text>
       </TouchableOpacity>
 
       {/* Right - Actions */}
       <View style={styles.actions}>
         {/* Wallet Button */}
-        <TouchableOpacity 
-          style={[styles.actionButton, { backgroundColor: theme.surface }]}
-          onPress={() => router.push('/wallet')}
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => router.push("/wallet")}
         >
-          <Icon name="wallet" set="ionicons" size={18} color={theme.text} />
-          <Text style={[styles.actionText, { color: theme.text }]}>$1,000</Text>
+          <Icon
+            name="wallet"
+            set="ionicons"
+            size={18}
+            color={theme.colors.text}
+          />
+          <Text style={styles.actionText}>$1,000</Text>
         </TouchableOpacity>
 
         {/* How to Play Button */}
-        <TouchableOpacity 
-          style={[styles.actionButton, { backgroundColor: theme.surface }]}
-          onPress={() => router.push('/how-to-play')}
+        <TouchableOpacity
+          style={styles.actionButton}
+          onPress={() => router.push("/how-to-play")}
         >
-          <Icon name="help-circle" set="feather" size={18} color={theme.text} />
-          <Text style={[styles.actionText, { color: theme.text }]}>How to Play</Text>
+          <Icon
+            name="help-circle"
+            set="feather"
+            size={18}
+            color={theme.colors.text}
+          />
+          <Text style={styles.actionText}>How to Play</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-  },
-  logoContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  logoText: {
-    fontSize: 24,
-    fontWeight: '700',
-  },
-  actions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 20,
-    gap: 6,
-  },
-  actionText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-});

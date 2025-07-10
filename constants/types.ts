@@ -119,6 +119,7 @@ export interface TradeAction {
   actionType: "buy" | "sell";
   label: string;
   price: number;
+  priceDisplay: string;
   marketType: "binary" | "multi-outcome";
 }
 

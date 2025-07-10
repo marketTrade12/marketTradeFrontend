@@ -1,199 +1,272 @@
-import Icon from '@/components/ui/Icon';
-import { Colors } from '@/constants/Colors';
-import { MarketIcon } from '@/constants/types';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import Icon from "@/components/ui/Icon";
+import { useTheme } from "@/hooks/useThemeColor";
+import React, { useMemo } from "react";
+import { Image, StyleSheet, Text, TouchableOpacity, View } from "react-native";
 
 interface MarketDetailHeaderProps {
-  title: string;
-  icon: MarketIcon;
-  volume: string;
-  endDate: string;
-  onShare: () => void;
-  onBookmark: () => void;
+  market: {
+    id: string;
+    title: string;
+    description: string;
+    imageUrl?: string;
+    category: string;
+    endDate: string;
+    volume: number;
+    participants: number;
+  };
   onBack: () => void;
+  onBookmark?: () => void;
+  onShare?: () => void;
   isBookmarked?: boolean;
 }
 
 export default function MarketDetailHeader({
-  title,
-  icon,
-  volume,
-  endDate,
-  onShare,
-  onBookmark,
+  market,
   onBack,
+  onBookmark,
+  onShare,
   isBookmarked = false,
 }: MarketDetailHeaderProps) {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? 'light'];
+  const theme = useTheme();
 
-  const formatEndDate = (dateString: string): string => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'short', 
-        day: 'numeric' 
-      });
-    } catch {
-      return 'TBD';
-    }
+  const formatTimeRemaining = (endDate: string) => {
+    const now = new Date();
+    const end = new Date(endDate);
+    const diff = end.getTime() - now.getTime();
+
+    if (diff <= 0) return "Ended";
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+
+    if (days > 0) return `${days}d ${hours}h left`;
+    return `${hours}h left`;
   };
 
-  return (
-    <View style={styles.container}>
-      {/* Back Button */}
-      <View style={styles.backButtonContainer}>
-        <TouchableOpacity 
-          style={[styles.backButton, { backgroundColor: theme.surface }]}
-          onPress={onBack}
-          activeOpacity={0.7}
-        >
-          <Icon name="arrow-left" set="feather" size={20} color={theme.text} />
-        </TouchableOpacity>
-      </View>
+  const dynamicStyles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          backgroundColor: theme.colors.primary,
+          paddingBottom: theme.spacing.lg,
+        },
+        header: {
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          paddingHorizontal: theme.spacing.md,
+          paddingTop: theme.spacing.lg,
+          paddingBottom: theme.spacing.md,
+        },
+        backButton: {
+          width: 40,
+          height: 40,
+          borderRadius: theme.borderRadius.lg,
+          backgroundColor: theme.colors.background + "20",
+          alignItems: "center",
+          justifyContent: "center",
+          ...theme.shadows.small,
+        },
+        headerActions: {
+          flexDirection: "row",
+          gap: theme.spacing.sm,
+        },
+        actionButton: {
+          width: 40,
+          height: 40,
+          borderRadius: theme.borderRadius.lg,
+          backgroundColor: theme.colors.background + "20",
+          alignItems: "center",
+          justifyContent: "center",
+          ...theme.shadows.small,
+        },
+        content: {
+          backgroundColor: theme.colors.cardBackground,
+          marginHorizontal: theme.spacing.md,
+          borderRadius: theme.borderRadius.md,
+          padding: theme.spacing.lg,
+          ...theme.shadows.medium,
+        },
+        marketInfo: {
+          flexDirection: "row",
+          alignItems: "flex-start",
+          gap: theme.spacing.md,
+        },
+        marketImage: {
+          width: 56,
+          height: 56,
+          borderRadius: theme.borderRadius.md,
+          backgroundColor: theme.colors.surface,
+        },
+        marketContent: {
+          flex: 1,
+        },
+        categoryContainer: {
+          flexDirection: "row",
+          alignItems: "center",
+          gap: theme.spacing.sm,
+          marginBottom: theme.spacing.xs,
+        },
+        categoryBadge: {
+          width: 36,
+          height: 36,
+          borderRadius: theme.borderRadius.lg,
+          backgroundColor: theme.colors.primaryLight,
+          alignItems: "center",
+          justifyContent: "center",
+          ...theme.shadows.small,
+        },
+        categoryText: {
+          fontSize: theme.typography.body2.fontSize,
+          fontWeight: theme.typography.body2.fontWeight,
+          fontFamily: theme.typography.body2.fontFamily,
+          color: theme.colors.primary,
+          textTransform: "uppercase",
+        },
+        title: {
+          fontSize: theme.typography.h2.fontSize,
+          fontWeight: theme.typography.h2.fontWeight,
+          fontFamily: theme.typography.h2.fontFamily,
+          color: theme.colors.text,
+          lineHeight: theme.typography.h2.lineHeight,
+          marginBottom: theme.spacing.sm,
+        },
+        description: {
+          fontSize: theme.typography.body1.fontSize,
+          fontFamily: theme.typography.body1.fontFamily,
+          color: theme.colors.textSecondary,
+          lineHeight: theme.typography.body1.lineHeight,
+          marginBottom: theme.spacing.md,
+        },
+        statsContainer: {
+          flexDirection: "row",
+          gap: theme.spacing.lg,
+        },
+        statItem: {
+          alignItems: "center",
+          gap: theme.spacing.xs,
+        },
+        statLabel: {
+          fontSize: theme.typography.body2.fontSize,
+          fontFamily: theme.typography.body2.fontFamily,
+          color: theme.colors.textSecondary,
+        },
+        statValue: {
+          fontSize: theme.typography.body1.fontSize,
+          fontWeight: theme.typography.body1.fontWeight,
+          fontFamily: theme.typography.body1.fontFamily,
+          color: theme.colors.text,
+        },
+        timeRemaining: {
+          color: theme.colors.warning,
+        },
+      }),
+    [theme]
+  );
 
-      {/* Header Content */}
-      <View style={[styles.header, { backgroundColor: theme.surface }]}>
-        <View style={styles.headerTop}>
-          <View style={[styles.iconContainer, { backgroundColor: theme.primary + '15' }]}>
-            <Icon
-              name={icon.name}
-              set={icon.set}
-              size={32}
-              color={theme.primary}
-            />
-          </View>
-          
-          <View style={styles.headerActions}>
-            <TouchableOpacity 
-              style={[styles.actionButton, { backgroundColor: theme.background }]}
-              onPress={onShare}
-              activeOpacity={0.7}
-            >
-              <Icon name="share" set="feather" size={18} color={theme.text} />
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[
-                styles.actionButton, 
-                { 
-                  backgroundColor: isBookmarked ? theme.primary + '15' : theme.background 
-                }
-              ]}
+  return (
+    <View style={dynamicStyles.container}>
+      {/* Header with navigation */}
+      <View style={dynamicStyles.header}>
+        <TouchableOpacity style={dynamicStyles.backButton} onPress={onBack}>
+          <Icon
+            name="arrow-left"
+            set="feather"
+            size={20}
+            color={theme.colors.textInverse}
+          />
+        </TouchableOpacity>
+
+        <View style={dynamicStyles.headerActions}>
+          {onBookmark && (
+            <TouchableOpacity
+              style={dynamicStyles.actionButton}
               onPress={onBookmark}
-              activeOpacity={0.7}
             >
-              <Icon 
-                name={isBookmarked ? "bookmark" : "bookmark-outline"} 
-                set="material" 
-                size={18} 
-                color={isBookmarked ? theme.primary : theme.text}
+              <Icon
+                name={isBookmarked ? "bookmark" : "bookmark"}
+                set="feather"
+                size={20}
+                color={theme.colors.textInverse}
               />
             </TouchableOpacity>
-          </View>
+          )}
+          {onShare && (
+            <TouchableOpacity
+              style={dynamicStyles.actionButton}
+              onPress={onShare}
+            >
+              <Icon
+                name="share"
+                set="feather"
+                size={20}
+                color={theme.colors.textInverse}
+              />
+            </TouchableOpacity>
+          )}
         </View>
+      </View>
 
-        <Text style={[styles.title, { color: theme.text }]}>
-          {title}
-        </Text>
+      {/* Market content card */}
+      <View style={dynamicStyles.content}>
+        <View style={dynamicStyles.marketInfo}>
+          {market.imageUrl && (
+            <Image
+              source={{ uri: market.imageUrl }}
+              style={dynamicStyles.marketImage}
+            />
+          )}
 
-        <View style={styles.metaInfo}>
-          <View style={styles.metaItem}>
-            <Icon name="bar-chart-2" set="feather" size={14} color={theme.textSecondary} />
-            <Text style={[styles.metaText, { color: theme.textSecondary }]}>
-              {volume} Vol.
+          <View style={dynamicStyles.marketContent}>
+            <View style={dynamicStyles.categoryContainer}>
+              <View style={dynamicStyles.categoryBadge}>
+                <Icon
+                  name="tag"
+                  set="feather"
+                  size={16}
+                  color={theme.colors.primary}
+                />
+              </View>
+              <Text style={dynamicStyles.categoryText}>{market.category}</Text>
+            </View>
+
+            <Text style={dynamicStyles.title} numberOfLines={2}>
+              {market.title}
             </Text>
-          </View>
-          <View style={styles.metaItem}>
-            <Icon name="calendar" set="feather" size={14} color={theme.textSecondary} />
-            <Text style={[styles.metaText, { color: theme.textSecondary }]}>
-              Ends {formatEndDate(endDate)}
-            </Text>
+
+            {market.description && (
+              <Text style={dynamicStyles.description} numberOfLines={3}>
+                {market.description}
+              </Text>
+            )}
+
+            <View style={dynamicStyles.statsContainer}>
+              <View style={dynamicStyles.statItem}>
+                <Text style={dynamicStyles.statLabel}>Volume</Text>
+                <Text style={dynamicStyles.statValue}>
+                  ₹{market.volume.toLocaleString()}
+                </Text>
+              </View>
+
+              <View style={dynamicStyles.statItem}>
+                <Text style={dynamicStyles.statLabel}>Traders</Text>
+                <Text style={dynamicStyles.statValue}>
+                  {market.participants}
+                </Text>
+              </View>
+
+              <View style={dynamicStyles.statItem}>
+                <Text style={dynamicStyles.statLabel}>Time Left</Text>
+                <Text
+                  style={[dynamicStyles.statValue, dynamicStyles.timeRemaining]}
+                >
+                  {formatTimeRemaining(market.endDate)}
+                </Text>
+              </View>
+            </View>
           </View>
         </View>
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    paddingTop: 8,
-  },
-  backButtonContainer: {
-    paddingHorizontal: 16,
-    marginBottom: 12,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  header: {
-    padding: 20,
-    marginHorizontal: 16,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerActions: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  actionButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    lineHeight: 32,
-    marginBottom: 16,
-  },
-  metaInfo: {
-    flexDirection: 'row',
-    gap: 16,
-  },
-  metaItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  metaText: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-}); 

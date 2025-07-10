@@ -4,7 +4,6 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   Image,
-  Modal,
   Platform,
   RefreshControl,
   ScrollView,
@@ -20,877 +19,663 @@ import ErrorState from "@/components/common/ErrorState";
 import LoadingState from "@/components/common/LoadingState";
 import TradeBottomSheet from "@/components/TradeBottomSheet";
 
-import { Colors } from "@/constants/Colors";
 import { marketData } from "@/constants/data";
-import { MarketItem, TradeAction } from "@/constants/types";
 import { useBookmarks } from "@/hooks/useBookmarks";
-import { useColorScheme } from "@/hooks/useColorScheme";
+import { useTheme } from "@/hooks/useThemeColor";
 import { formatTimeRemaining } from "@/utils/marketUtils";
 
 // --- TYPES ---
 // Re-defined here to support the new UI. Ideally, centralize these.
 type OrderBookEntry = { price: number; amount: number };
-type OrderBook = { bids: OrderBookEntry[]; asks: OrderBookEntry[] };
-type EventDetails = {
-  endingIn: string;
-  settlementBy: string;
-  listedOn: string;
-  tradingVolume: string;
-};
-type Outcome = {
+
+interface Outcome {
   id: string;
   label: string;
-  volume: number;
   chance: number;
   yesPrice: number;
   noPrice: number;
-  orderBook: OrderBook;
-  description?: string;
-  imageUrl?: string;
-};
-type MarketDetail = {
-  id: string;
-  title: string;
-  icon: { name: string; set: string };
-  category: string;
-  totalVolume: string;
-  endDate: string;
-  resolver: { name: string; address: string };
-  tags: string[];
-  outcomes: Outcome[];
-  type: "binary" | "multi-outcome";
-  description?: string;
-  eventDetails?: EventDetails;
-  rules?: string;
-  imageUrl?: string;
-};
-
-// --- DATA ADAPTER ---
-class MarketDataAdapter {
-  private static instance: MarketDataAdapter;
-  static getInstance(): MarketDataAdapter {
-    if (!MarketDataAdapter.instance) {
-      MarketDataAdapter.instance = new MarketDataAdapter();
-    }
-    return MarketDataAdapter.instance;
-  }
-
-  private generateOrderBook(price: number) {
-    return {
-      bids: [
-        { price: 2.0, amount: 900 },
-        { price: 2.5, amount: 450 },
-        { price: 3.0, amount: 2 },
-        { price: 3.5, amount: 3 },
-        { price: 4.0, amount: 1 },
-      ],
-      asks: [
-        { price: 2.0, amount: 900 },
-        { price: 2.5, amount: 450 },
-        { price: 3.0, amount: 2 },
-        { price: 3.5, amount: 3 },
-        { price: 4.0, amount: 1 },
-      ],
-    };
-  }
-
-  transformToUIData(item: MarketItem): MarketDetail | null {
-    try {
-      const isBinary = item.type === "binary";
-      const outcomes: Outcome[] = isBinary
-        ? [
-            {
-              id: item.yesOption.id,
-              label: item.yesOption.label,
-              volume: parseFloat(item.yesOption.volume24h) || 0,
-              chance: item.yesOption.price * 100,
-              yesPrice: item.yesOption.price,
-              noPrice: item.noOption.price,
-              orderBook: this.generateOrderBook(item.yesOption.price),
-            },
-          ]
-        : item.options.map((opt) => ({
-            id: opt.id,
-            label: opt.label,
-            volume: parseFloat(opt.volume24h) || 0,
-            chance: opt.price * 100,
-            yesPrice: opt.price,
-            noPrice: 1 - opt.price,
-            orderBook: this.generateOrderBook(opt.price),
-            description: `Overview In the 2019 Lok Sabha elections, the BJP secured a massive 303 seats on its own, while the Congress was youth participation, and shifting alliances—like the rise of the INDIA bloc—are likely to play`,
-            imageUrl:
-              item.imageUrl || "https://picsum.photos/64/64?random=" + opt.id,
-          }));
-
-      return {
-        id: item.id,
-        title: item.title,
-        icon: item.icon,
-        category: item.category,
-        totalVolume: item.totalVolume,
-        endDate: item.endDate,
-        resolver: {
-          name: item.resolutionSource,
-          address: `https://${item.resolutionSource
-            .toLowerCase()
-            .replace(/\s+/g, "")}.com`,
-        },
-        tags: item.tags,
-        outcomes,
-        type: item.type,
-        description:
-          item.description ||
-          "Aamir Khan's Dangal (2016) remains his highest-grossing film, earning over ₹2,000 crore globally. Before that, 3 Idiots and PK set new domestic box office records with ₹200+ crore and ₹300+ crore respectively. However, Thugs of Hindostan and Laal Singh Chaddha underperformed",
-        eventDetails: {
-          endingIn: formatTimeRemaining(item.endDate),
-          settlementBy: "3 August, 2025, 11:59 PM",
-          listedOn: "8 July, 2025, 11:59 PM",
-          tradingVolume: `₹${(parseFloat(item.totalVolume) / 1000).toFixed(
-            0
-          )}k`,
-        },
-        rules:
-          "If the resolution source is unavailable, another credible source will be used. The market will be settled within 24 hours of the event's conclusion. Any disputes will be resolved by the platform.",
-        imageUrl: item.imageUrl,
-      };
-    } catch (error) {
-      console.error("Error transforming market data:", error);
-      return null;
-    }
-  }
-
-  getMarketData(id: string): MarketDetail | null {
-    const marketItem = marketData.find((market) => market.id === id);
-    return marketItem ? this.transformToUIData(marketItem) : null;
-  }
+  volume: string;
+  icon?: { name: string; set: string };
+  orderBook?: {
+    bids: OrderBookEntry[];
+    asks: OrderBookEntry[];
+  };
 }
 
-// --- DATA HOOK ---
-const useMarketData = (marketId: string) => {
-  const [marketDetail, setMarketDetail] = useState<MarketDetail | null>(null);
+interface Event {
+  id: string;
+  date: string;
+  description: string;
+  // Add other fields as needed for events
+}
+
+interface MarketDetail {
+  id: string;
+  title: string;
+  category: string;
+  endDate: string;
+  type: "binary" | "multi-outcome";
+  outcomes: Outcome[];
+  totalVolume: string;
+  description: string;
+  traders: number;
+  imageUrl?: string;
+  events?: Event[];
+}
+
+export default function MarketDetailScreen() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
+  const theme = useTheme();
+  const { isBookmarked, toggleBookmark } = useBookmarks();
+
+  // === STATE ===
+  const [market, setMarket] = useState<MarketDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const adapter = MarketDataAdapter.getInstance();
+  // UI State
+  const [expandedOutcome, setExpandedOutcome] = useState<string | null>(null);
+  const [showEvents, setShowEvents] = useState(false);
 
-  const loadMarketData = useCallback(async () => {
+  // Bottom sheet state
+  const tradeSheetRef = useRef<BottomSheetModal>(null);
+  const [selectedTrade, setSelectedTrade] = useState<{
+    detailId: string;
+    optionLabel: string;
+    actionType: "buy" | "sell";
+  } | null>(null);
+
+  // === EFFECTS ===
+  useEffect(() => {
+    loadMarketDetail();
+  }, [id]);
+
+  // === FUNCTIONS ===
+  const loadMarketDetail = async () => {
+    if (!id) return;
+
     try {
+      setLoading(true);
       setError(null);
-      await new Promise((resolve) => setTimeout(resolve, 300));
-      const data = adapter.getMarketData(marketId);
-      if (data) setMarketDetail(data);
-      else setError("Market not found");
+
+      // Find the market from data
+      const foundMarket = marketData.find((m) => m.id === id);
+      if (!foundMarket) {
+        setError("Market not found");
+        return;
+      }
+
+      // Transform to MarketDetail format
+      const marketDetail: MarketDetail = {
+        id: foundMarket.id,
+        title: foundMarket.title,
+        category: foundMarket.category,
+        endDate: foundMarket.endDate,
+        type: foundMarket.type,
+        totalVolume: foundMarket.totalVolume,
+        description: foundMarket.description || "No description available",
+        traders: 150, // Mock data
+        imageUrl: foundMarket.imageUrl,
+        outcomes:
+          foundMarket.type === "binary"
+            ? [
+                {
+                  id: "outcome-1",
+                  label: "Yes/No",
+                  chance: Math.round(foundMarket.yesOption.price * 100),
+                  yesPrice: Math.round(foundMarket.yesOption.price * 1000),
+                  noPrice: Math.round(foundMarket.noOption.price * 1000),
+                  volume: foundMarket.totalVolume,
+                  orderBook: {
+                    bids: [
+                      { price: 55, amount: 100 },
+                      { price: 54, amount: 150 },
+                    ],
+                    asks: [
+                      { price: 56, amount: 75 },
+                      { price: 57, amount: 200 },
+                    ],
+                  },
+                },
+              ]
+            : foundMarket.options.map((opt, idx) => ({
+                id: `outcome-${idx}`,
+                label: opt.label,
+                chance: Math.round(opt.price * 100),
+                yesPrice: Math.round(opt.price * 1000),
+                noPrice: Math.round((1 - opt.price) * 1000),
+                volume: "₹25K",
+                icon: { name: "circle", set: "feather" },
+                orderBook: {
+                  bids: [{ price: 45, amount: 50 }],
+                  asks: [{ price: 47, amount: 30 }],
+                },
+              })),
+        events: [
+          {
+            id: "1",
+            date: "2024-12-20",
+            description: "Market created",
+          },
+          {
+            id: "2",
+            date: "2024-12-22",
+            description: "First trades placed",
+          },
+        ],
+      };
+
+      setMarket(marketDetail);
     } catch (err) {
-      setError("Failed to load market data");
+      console.error("Error loading market:", err);
+      setError("Failed to load market details");
     } finally {
       setLoading(false);
-      setRefreshing(false);
     }
-  }, [marketId, adapter]);
-
-  const refresh = useCallback(() => {
-    setRefreshing(true);
-    loadMarketData();
-  }, [loadMarketData]);
-
-  useEffect(() => {
-    loadMarketData();
-  }, [loadMarketData]);
-
-  return { marketDetail, loading, error, refreshing, refresh };
-};
-
-// --- UI COMPONENTS ---
-const CollapsibleSection = ({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const theme = useColorScheme();
-  return (
-    <View style={styles.collapsibleContainer}>
-      <TouchableOpacity
-        style={styles.collapsibleHeader}
-        onPress={() => setIsExpanded(!isExpanded)}
-      >
-        <Text style={styles.collapsibleTitle}>{title}</Text>
-        <Icon
-          name={isExpanded ? "chevron-up" : "chevron-down"}
-          set="feather"
-          size={24}
-          color={Colors[theme ?? "light"].text}
-        />
-      </TouchableOpacity>
-      {isExpanded && <View style={styles.collapsibleContent}>{children}</View>}
-    </View>
-  );
-};
-
-const EventDetailsSection = ({ details }: { details: EventDetails }) => {
-  const theme = useColorScheme();
-  const detailItems = [
-    { label: "Ending in", value: details.endingIn },
-    { label: "Settlement by", value: details.settlementBy },
-    { label: "Listed on", value: details.listedOn },
-    { label: "Trading volume", value: details.tradingVolume },
-  ];
-  return (
-    <View>
-      {detailItems.map((item, index) => (
-        <View key={item.label} style={styles.eventDetailRow}>
-          <Text
-            style={[
-              styles.eventDetailLabel,
-              { color: Colors[theme ?? "light"].textSecondary },
-            ]}
-          >
-            {item.label}
-          </Text>
-          <Text
-            style={[
-              styles.eventDetailValue,
-              { color: Colors[theme ?? "light"].text },
-            ]}
-          >
-            {item.value}
-          </Text>
-        </View>
-      ))}
-    </View>
-  );
-};
-
-const OrderBookSection = ({ orderBook }: { orderBook: OrderBook }) => {
-  const theme = useColorScheme();
-  return (
-    <View style={styles.orderBookContainer}>
-      <View style={styles.orderBookHeader}>
-        <Text style={styles.orderBookTitleYes}>Yes Price</Text>
-        <Text style={styles.orderBookTitle}>Qty.</Text>
-        <Text style={styles.orderBookTitleNo}>No Price</Text>
-        <Text style={styles.orderBookTitle}>Qty.</Text>
-      </View>
-      {orderBook.bids.map((bid, index) => (
-        <View key={index} style={styles.orderBookRow}>
-          <Text style={styles.orderBookPrice}>{bid.price.toFixed(1)}</Text>
-          <Text
-            style={[
-              styles.orderBookQty,
-              { backgroundColor: "rgba(196, 181, 253, 0.5)" },
-            ]}
-          >
-            {bid.amount}
-          </Text>
-          <Text style={styles.orderBookPrice}>
-            {orderBook.asks[index]?.price.toFixed(1)}
-          </Text>
-          <Text
-            style={[
-              styles.orderBookQty,
-              { backgroundColor: "rgba(134, 239, 172, 0.5)" },
-            ]}
-          >
-            {orderBook.asks[index]?.amount}
-          </Text>
-        </View>
-      ))}
-    </View>
-  );
-};
-
-// --- MAIN COMPONENT ---
-export default function MarketDetailPage() {
-  const router = useRouter();
-  const { id } = useLocalSearchParams<{ id: string }>();
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
-
-  const { marketDetail, loading, error, refreshing, refresh } =
-    useMarketData(id);
-  const [tradeMeta, setTradeMeta] = useState<TradeAction | null>(null);
-  const { isBookmarked, toggleBookmark } = useBookmarks();
-  const sheetRef = useRef<BottomSheetModal>(null);
-  const [isCategoryModalVisible, setIsCategoryModalVisible] = useState(false);
-  const categories = [
-    "Economics",
-    "Politics",
-    "Entertainment",
-    "Sports",
-    "Technology",
-    "Finance",
-    "Crypto",
-  ];
-
-  const handleTradePress = useCallback(
-    (label: string, price: number, optionId?: string) => {
-      if (!marketDetail) return;
-      setTradeMeta({
-        detailId: marketDetail.id,
-        optionId: optionId || marketDetail.outcomes[0].id,
-        actionType: "buy",
-        label,
-        price,
-        marketType: marketDetail.type,
-      });
-      sheetRef.current?.present();
-    },
-    [marketDetail]
-  );
-
-  const handleShare = useCallback(async () => {
-    /* ... existing share logic ... */
-  }, [marketDetail]);
-  const handleBookmark = useCallback(() => {
-    /* ... existing bookmark logic ... */
-  }, [marketDetail, toggleBookmark]);
-  const handleBackPress = useCallback(() => {
-    router.back();
-  }, [router]);
-
-  const handleCategoryPress = () => {
-    setIsCategoryModalVisible(true);
   };
 
-  if (loading)
-    return (
-      <SafeAreaView
-        style={[styles.safeArea, { backgroundColor: theme.background }]}
-      >
-        <LoadingState message="Loading market..." />
-      </SafeAreaView>
-    );
-  if (error || !marketDetail)
-    return (
-      <SafeAreaView
-        style={[styles.safeArea, { backgroundColor: theme.background }]}
-      >
-        <ErrorState
-          message={error || "Market not found"}
-          onRetry={refresh}
-          onBack={handleBackPress}
-        />
-      </SafeAreaView>
-    );
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await loadMarketDetail();
+    setRefreshing(false);
+  }, []);
 
-  const renderBinaryMarket = () => (
-    <>
-      <View style={styles.contentContainer}>
-        <View style={styles.binaryHeader}>
-          <Text style={styles.title}>{marketDetail.title}</Text>
-          {marketDetail.imageUrl && (
+  const handleTradePress = useCallback(
+    (optionLabel: string, actionType: "buy" | "sell", price?: number) => {
+      if (!market) return;
+
+      setSelectedTrade({
+        detailId: market.id,
+        optionLabel,
+        actionType,
+      });
+      tradeSheetRef.current?.present();
+    },
+    [market]
+  );
+
+  const handleCloseTradeSheet = useCallback(() => {
+    setSelectedTrade(null);
+  }, []);
+
+  const toggleOutcomeExpansion = (outcomeId: string) => {
+    setExpandedOutcome(expandedOutcome === outcomeId ? null : outcomeId);
+  };
+
+  const renderHeader = () => (
+    <View style={styles.header}>
+      <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+        <Icon
+          name="arrow-left"
+          set="feather"
+          size={24}
+          color={theme.colors.textInverse}
+        />
+      </TouchableOpacity>
+
+      <View style={styles.headerActions}>
+        <TouchableOpacity
+          style={styles.headerButton}
+          onPress={() => market && toggleBookmark(market as any)}
+        >
+          <Icon
+            name={isBookmarked(market?.id || "") ? "bookmark" : "bookmark"}
+            set="feather"
+            size={20}
+            color={theme.colors.textSecondary}
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.headerButton}>
+          <Icon
+            name="share"
+            set="feather"
+            size={20}
+            color={theme.colors.textSecondary}
+          />
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.headerButton}>
+          <Icon
+            name="more-vertical"
+            set="feather"
+            size={20}
+            color={theme.colors.textSecondary}
+          />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  const renderContent = () => {
+    if (!market) return null;
+
+    return (
+      <View style={styles.content}>
+        {/* Market Image & Basic Info */}
+        <View style={styles.marketInfo}>
+          {market.imageUrl && (
             <Image
-              source={{ uri: marketDetail.imageUrl }}
+              source={{ uri: market.imageUrl }}
               style={styles.marketImage}
             />
           )}
-        </View>
-        <View style={styles.binaryTradeOptions}>
-          <TouchableOpacity
-            style={styles.yesButton}
-            onPress={() =>
-              handleTradePress("Yes", marketDetail.outcomes[0].yesPrice)
-            }
-          >
-            <Text style={styles.tradeButtonText}>
-              Yes ₹{(marketDetail.outcomes[0].yesPrice * 10).toFixed(1)}
-            </Text>
-          </TouchableOpacity>
-          <Text style={styles.getAmount}>Get ₹ 10</Text>
-        </View>
-        <View style={styles.binaryTradeOptions}>
-          <TouchableOpacity
-            style={styles.noButton}
-            onPress={() =>
-              handleTradePress("No", marketDetail.outcomes[0].noPrice)
-            }
-          >
-            <Text style={styles.noButtonText}>
-              No ₹{(marketDetail.outcomes[0].noPrice * 10).toFixed(1)}
-            </Text>
-          </TouchableOpacity>
-          <Text style={styles.getAmount}>Get ₹ 10</Text>
-        </View>
-        <View style={styles.overviewContainer}>
-          <Text style={styles.overviewTitle}>Overview</Text>
-          <Text style={styles.overviewText}>
-            {marketDetail.description}{" "}
-            <Text style={styles.readMore}>read more</Text>
-          </Text>
-        </View>
-      </View>
-    </>
-  );
 
-  const renderMultiOutcomeMarket = () => (
-    <View style={styles.contentContainer}>
-      <Text style={styles.title}>{marketDetail.title}</Text>
-      {marketDetail.outcomes.map((outcome) => (
-        <View key={outcome.id} style={styles.multiOutcomeCard}>
-          <View style={styles.multiOutcomeHeader}>
-            <Image
-              source={{ uri: outcome.imageUrl }}
-              style={styles.multiOutcomeImage}
-            />
-            <Text style={styles.multiOutcomeLabel}>{outcome.label}</Text>
-            <View style={styles.multiOutcomeChance}>
-              <Text>{outcome.chance}%</Text>
-            </View>
+          <View style={styles.marketMeta}>
+            <Text style={styles.category}>{market.category.toUpperCase()}</Text>
+            <Text style={styles.timeRemaining}>
+              {formatTimeRemaining(market.endDate)}
+            </Text>
           </View>
-          <View style={styles.binaryTradeOptions}>
-            <TouchableOpacity
-              style={styles.yesButton}
-              onPress={() =>
-                handleTradePress("Yes", outcome.yesPrice, outcome.id)
-              }
-            >
-              <Text style={styles.tradeButtonText}>
-                Yes ₹{(outcome.yesPrice * 10).toFixed(1)}
-              </Text>
-            </TouchableOpacity>
-            <Text style={styles.getAmount}>Get ₹ 10</Text>
-          </View>
-          <View style={styles.binaryTradeOptions}>
-            <TouchableOpacity
-              style={styles.noButton}
-              onPress={() =>
-                handleTradePress("No", outcome.noPrice, outcome.id)
-              }
-            >
-              <Text style={styles.tradeButtonText}>
-                No ₹{(outcome.noPrice * 10).toFixed(1)}
-              </Text>
-            </TouchableOpacity>
-            <Text style={styles.getAmount}>Get ₹ 10</Text>
-          </View>
-          <Text style={styles.overviewText} numberOfLines={2}>
-            {outcome.description} <Text style={styles.readMore}>read more</Text>
-          </Text>
         </View>
-      ))}
-    </View>
-  );
+
+        {/* Title */}
+        <Text style={styles.title}>{market.title}</Text>
+
+        {/* Stats */}
+        <View style={styles.stats}>
+          <View style={styles.statItem}>
+            <Text style={styles.statLabel}>Volume</Text>
+            <Text style={styles.statValue}>{market.totalVolume}</Text>
+          </View>
+
+          <View style={styles.statItem}>
+            <Text style={styles.statLabel}>Traders</Text>
+            <Text style={styles.statValue}>{market.traders}</Text>
+          </View>
+
+          <View style={styles.statItem}>
+            <Text style={styles.statLabel}>Ends</Text>
+            <Text style={styles.statValue}>
+              {new Date(market.endDate).toLocaleDateString()}
+            </Text>
+          </View>
+        </View>
+
+        {/* Description */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>About</Text>
+          <Text style={styles.description}>{market.description}</Text>
+        </View>
+
+        {/* Outcomes */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>
+            {market.type === "binary" ? "Options" : "Outcomes"}
+          </Text>
+
+          {market.outcomes.map((outcome, index) => (
+            <View key={outcome.id} style={styles.outcomeCard}>
+              {market.type === "binary" ? (
+                <View style={styles.binaryOutcome}>
+                  <TouchableOpacity
+                    style={[styles.binaryOption, styles.yesOption]}
+                    onPress={() =>
+                      handleTradePress("Yes", "buy", outcome.yesPrice)
+                    }
+                  >
+                    <Text style={styles.optionLabel}>YES</Text>
+                    <Text style={styles.optionPrice}>{outcome.yesPrice}¢</Text>
+                    <Text style={styles.optionChance}>{outcome.chance}%</Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.binaryOption, styles.noOption]}
+                    onPress={() =>
+                      handleTradePress("No", "sell", outcome.noPrice)
+                    }
+                  >
+                    <Text style={styles.optionLabel}>NO</Text>
+                    <Text style={styles.optionPrice}>{outcome.noPrice}¢</Text>
+                    <Text style={styles.optionChance}>
+                      {100 - outcome.chance}%
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View style={styles.multiOutcome}>
+                  <View style={styles.multiHeader}>
+                    <Text style={styles.multiLabel}>{outcome.label}</Text>
+                    <Text style={styles.multiChance}>{outcome.chance}%</Text>
+                  </View>
+
+                  <View style={styles.multiActions}>
+                    <TouchableOpacity
+                      style={styles.multiButton}
+                      onPress={() =>
+                        handleTradePress(`${outcome.label} - Yes`, "buy")
+                      }
+                    >
+                      <Text style={styles.multiButtonText}>
+                        Buy Yes {outcome.yesPrice}¢
+                      </Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.multiButton}
+                      onPress={() =>
+                        handleTradePress(`${outcome.label} - No`, "sell")
+                      }
+                    >
+                      <Text style={styles.multiButtonText}>
+                        Buy No {outcome.noPrice}¢
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              )}
+            </View>
+          ))}
+        </View>
+
+        {/* Events */}
+        {market.events && market.events.length > 0 && (
+          <View style={styles.section}>
+            <TouchableOpacity
+              style={styles.sectionHeader}
+              onPress={() => setShowEvents(!showEvents)}
+            >
+              <Text style={styles.sectionTitle}>Recent Activity</Text>
+              <Icon
+                name={showEvents ? "chevron-up" : "chevron-down"}
+                set="feather"
+                size={20}
+                color={theme.colors.textSecondary}
+              />
+            </TouchableOpacity>
+
+            {showEvents && (
+              <View style={styles.eventsList}>
+                {market.events.map((event) => (
+                  <View key={event.id} style={styles.eventItem}>
+                    <Text style={styles.eventDate}>
+                      {new Date(event.date).toLocaleDateString()}
+                    </Text>
+                    <Text style={styles.eventDescription}>
+                      {event.description}
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        )}
+      </View>
+    );
+  };
+
+  const styles = StyleSheet.create({
+    safeArea: {
+      flex: 1,
+      backgroundColor: theme.colors.surface,
+    },
+    header: {
+      backgroundColor: theme.colors.primary,
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      paddingHorizontal: theme.spacing.lg,
+      paddingVertical: theme.spacing.md,
+      paddingTop: Platform.OS === "ios" ? theme.spacing.xl : theme.spacing.md,
+    },
+    backButton: {
+      padding: theme.spacing.sm,
+    },
+    headerActions: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: theme.spacing.sm,
+    },
+    headerButton: {
+      padding: theme.spacing.sm,
+    },
+    scrollContainer: {
+      flex: 1,
+    },
+    content: {
+      backgroundColor: theme.colors.background,
+      paddingHorizontal: theme.spacing.lg,
+      paddingTop: theme.spacing.lg,
+    },
+    marketInfo: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginBottom: theme.spacing.lg,
+    },
+    marketImage: {
+      width: 60,
+      height: 60,
+      borderRadius: theme.borderRadius.md,
+      marginRight: theme.spacing.md,
+    },
+    marketMeta: {
+      flex: 1,
+    },
+    category: {
+      fontSize: theme.typography.body2.fontSize,
+      fontFamily: theme.typography.body2.fontFamily,
+      color: theme.colors.textSecondary,
+      marginBottom: theme.spacing.xs,
+    },
+    timeRemaining: {
+      fontSize: theme.typography.body1.fontSize,
+      fontFamily: theme.typography.body1.fontFamily,
+      color: theme.colors.text,
+      fontWeight: "500",
+    },
+    title: {
+      fontSize: theme.typography.h2.fontSize,
+      fontFamily: theme.typography.h2.fontFamily,
+      fontWeight: theme.typography.h2.fontWeight,
+      color: theme.colors.text,
+      marginBottom: theme.spacing.lg,
+      lineHeight: 32,
+    },
+    stats: {
+      flexDirection: "row",
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.md,
+      padding: theme.spacing.lg,
+      marginBottom: theme.spacing.lg,
+      ...theme.shadows.small,
+    },
+    statItem: {
+      flex: 1,
+      alignItems: "center",
+    },
+    statLabel: {
+      fontSize: theme.typography.body2.fontSize,
+      fontFamily: theme.typography.body2.fontFamily,
+      color: theme.colors.textSecondary,
+      marginBottom: theme.spacing.xs,
+    },
+    statValue: {
+      fontSize: theme.typography.body1.fontSize,
+      fontFamily: theme.typography.body1.fontFamily,
+      fontWeight: "600",
+      color: theme.colors.text,
+    },
+    section: {
+      marginBottom: theme.spacing.xl,
+    },
+    sectionHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: theme.spacing.md,
+    },
+    sectionTitle: {
+      fontSize: theme.typography.subHeading.fontSize,
+      fontFamily: theme.typography.subHeading.fontFamily,
+      fontWeight: theme.typography.subHeading.fontWeight,
+      color: theme.colors.text,
+      marginBottom: theme.spacing.md,
+    },
+    description: {
+      fontSize: theme.typography.body1.fontSize,
+      fontFamily: theme.typography.body1.fontFamily,
+      color: theme.colors.text,
+      lineHeight: 24,
+    },
+    outcomeCard: {
+      backgroundColor: theme.colors.cardBackground,
+      borderRadius: theme.borderRadius.md,
+      padding: theme.spacing.lg,
+      marginBottom: theme.spacing.md,
+      ...theme.shadows.small,
+    },
+    binaryOutcome: {
+      flexDirection: "row",
+      gap: theme.spacing.md,
+    },
+    binaryOption: {
+      flex: 1,
+      padding: theme.spacing.lg,
+      borderRadius: theme.borderRadius.md,
+      alignItems: "center",
+    },
+    yesOption: {
+      backgroundColor: theme.colors.success + "15",
+      borderWidth: 1,
+      borderColor: theme.colors.success + "30",
+    },
+    noOption: {
+      backgroundColor: theme.colors.error + "15",
+      borderWidth: 1,
+      borderColor: theme.colors.error + "30",
+    },
+    optionLabel: {
+      fontSize: theme.typography.body2.fontSize,
+      fontFamily: theme.typography.body2.fontFamily,
+      fontWeight: "600",
+      marginBottom: theme.spacing.xs,
+    },
+    optionPrice: {
+      fontSize: theme.typography.h3.fontSize,
+      fontFamily: theme.typography.h3.fontFamily,
+      fontWeight: theme.typography.h3.fontWeight,
+      marginBottom: theme.spacing.xs,
+    },
+    optionChance: {
+      fontSize: theme.typography.body2.fontSize,
+      fontFamily: theme.typography.body2.fontFamily,
+      color: theme.colors.textSecondary,
+    },
+    multiOutcome: {
+      // Multi-outcome styles
+    },
+    multiHeader: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+      marginBottom: theme.spacing.md,
+    },
+    multiLabel: {
+      fontSize: theme.typography.body1.fontSize,
+      fontFamily: theme.typography.body1.fontFamily,
+      fontWeight: "500",
+      color: theme.colors.text,
+    },
+    multiChance: {
+      fontSize: theme.typography.body1.fontSize,
+      fontFamily: theme.typography.body1.fontFamily,
+      fontWeight: "600",
+      color: theme.colors.text,
+    },
+    multiActions: {
+      flexDirection: "row",
+      gap: theme.spacing.sm,
+    },
+    multiButton: {
+      flex: 1,
+      backgroundColor: theme.colors.primaryLight,
+      padding: theme.spacing.md,
+      borderRadius: theme.borderRadius.sm,
+      alignItems: "center",
+    },
+    multiButtonText: {
+      fontSize: theme.typography.body2.fontSize,
+      fontFamily: theme.typography.body2.fontFamily,
+      fontWeight: "600",
+      color: theme.colors.primary,
+    },
+    eventsList: {
+      // Events list styles
+    },
+    eventItem: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      paddingVertical: theme.spacing.sm,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+    },
+    eventDate: {
+      fontSize: theme.typography.body2.fontSize,
+      fontFamily: theme.typography.body2.fontFamily,
+      color: theme.colors.textSecondary,
+    },
+    eventDescription: {
+      fontSize: theme.typography.body2.fontSize,
+      fontFamily: theme.typography.body2.fontFamily,
+      color: theme.colors.text,
+      flex: 1,
+      textAlign: "right",
+    },
+  });
+
+  // === RENDER ===
+  if (loading) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <LoadingState message="Loading market details..." />
+      </SafeAreaView>
+    );
+  }
+
+  if (error || !market) {
+    return (
+      <SafeAreaView style={styles.safeArea}>
+        <ErrorState
+          message={error || "Market not found"}
+          onRetry={loadMarketDetail}
+          onBack={() => router.back()}
+        />
+      </SafeAreaView>
+    );
+  }
 
   return (
-    <SafeAreaView
-      style={[styles.safeArea, { backgroundColor: "#F3F4F6" }]}
-      edges={["top", "left", "right", "bottom"]}
-    >
-      <StatusBar backgroundColor="#8B5CF6" barStyle="light-content" />
-      <View style={[styles.header, { backgroundColor: "#8B5CF6" }]}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity onPress={handleBackPress}>
-            <Icon name="arrow-left" set="feather" size={24} color="#FFF" />
-          </TouchableOpacity>
-        </View>
-        <Image
-          source={require("../../assets/images/logo/logo.png")}
-          style={styles.logo}
-          resizeMode="contain"
+    <>
+      <SafeAreaView style={styles.safeArea}>
+        <StatusBar
+          backgroundColor={theme.colors.primary}
+          barStyle="light-content"
         />
-      </View>
+        {renderHeader()}
 
-      <View style={styles.subHeader}>
-        <TouchableOpacity
-          style={styles.categoryPill}
-          onPress={handleCategoryPress}
+        <ScrollView
+          style={styles.scrollContainer}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+          }
+          showsVerticalScrollIndicator={false}
         >
-          <Text style={styles.categoryText}>{marketDetail.category}</Text>
-          <Icon name="chevron-down" set="feather" size={16} color="#6B7280" />
-        </TouchableOpacity>
-        <Text style={styles.eventText}>
-          Event ID: {marketDetail.id.slice(0, 5)}
-        </Text>
-        <View style={{ flexDirection: "row" }}>
-          <TouchableOpacity onPress={handleShare} style={{ marginRight: 16 }}>
-            <Icon name="share" set="feather" size={20} color="#6B7280" />
-          </TouchableOpacity>
-          <TouchableOpacity onPress={handleBookmark}>
-            <Icon
-              name={isBookmarked(marketDetail.id) ? "bookmark" : "bookmark"}
-              set="feather"
-              size={20}
-              color="#6B7280"
-            />
-          </TouchableOpacity>
-        </View>
-      </View>
+          {renderContent()}
+        </ScrollView>
+      </SafeAreaView>
 
-      <ScrollView
-        style={styles.scrollView}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={refresh} />
-        }
-        showsVerticalScrollIndicator={false}
-      >
-        {marketDetail.type === "binary"
-          ? renderBinaryMarket()
-          : renderMultiOutcomeMarket()}
-
-        <View style={styles.collapsiblesContainer}>
-          <CollapsibleSection title="Event Details">
-            {marketDetail.eventDetails && (
-              <EventDetailsSection details={marketDetail.eventDetails} />
-            )}
-          </CollapsibleSection>
-          <CollapsibleSection title="Charts">
-            <Text style={styles.comingSoon}>Coming Soon</Text>
-          </CollapsibleSection>
-          <CollapsibleSection title="Order Book">
-            <OrderBookSection orderBook={marketDetail.outcomes[0].orderBook} />
-          </CollapsibleSection>
-          <CollapsibleSection title="Rules">
-            <Text style={styles.rulesText}>{marketDetail.rules}</Text>
-          </CollapsibleSection>
-          <CollapsibleSection title="Source Of Truth">
-            <Text style={styles.sourceText}>
-              The resolution source for this market is{" "}
-              <Text style={{ color: theme.primary }}>
-                {marketDetail.resolver.name}
-              </Text>
-              .
-            </Text>
-          </CollapsibleSection>
-        </View>
-        <View style={{ height: marketDetail.type === "binary" ? 100 : 32 }} />
-      </ScrollView>
-
-      {marketDetail.type === "binary" && (
-        <View style={styles.stickyFooter}>
-          <TouchableOpacity
-            style={styles.footerYesButton}
-            onPress={() =>
-              handleTradePress("Yes", marketDetail.outcomes[0].yesPrice)
-            }
-          >
-            <Text style={styles.footerButtonText}>
-              Yes ₹{(marketDetail.outcomes[0].yesPrice * 10).toFixed(1)}
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.footerNoButton}
-            onPress={() =>
-              handleTradePress("No", marketDetail.outcomes[0].noPrice)
-            }
-          >
-            <Text style={styles.footerButtonText}>
-              No ₹{(marketDetail.outcomes[0].noPrice * 10).toFixed(1)}
-            </Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {tradeMeta && (
+      {/* Trade Bottom Sheet */}
+      {selectedTrade && (
         <TradeBottomSheet
-          ref={sheetRef}
-          detailId={tradeMeta.detailId}
-          optionLabel={tradeMeta.label}
-          actionType={tradeMeta.actionType}
-          onClose={() => setTradeMeta(null)}
+          ref={tradeSheetRef}
+          detailId={selectedTrade.detailId}
+          optionLabel={selectedTrade.optionLabel}
+          actionType={selectedTrade.actionType}
+          onClose={handleCloseTradeSheet}
         />
       )}
-
-      <Modal
-        visible={isCategoryModalVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setIsCategoryModalVisible(false)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setIsCategoryModalVisible(false)}
-        >
-          <View style={styles.modalContent}>
-            {categories.map((category) => (
-              <TouchableOpacity
-                key={category}
-                style={styles.categoryItem}
-                onPress={() => {
-                  // Here you would typically update the market category
-                  setIsCategoryModalVisible(false);
-                }}
-              >
-                <Text style={styles.categoryItemText}>{category}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </TouchableOpacity>
-      </Modal>
-    </SafeAreaView>
+    </>
   );
 }
-
-const styles = StyleSheet.create({
-  safeArea: { flex: 1 },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-    gap: 110,
-    justifyContent: "flex-start",
-    paddingTop: Platform.OS === "android" ? 10 : 16,
-  },
-
-  headerLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  logo: {
-    width: 70,
-    height: 40,
-  },
-  headerTitle: {
-    color: "#FFF",
-    fontSize: 18,
-    fontWeight: "600",
-    marginLeft: 16,
-  },
-  subHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: "#F3F4F6",
-  },
-  categoryPill: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFF",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-  },
-  categoryText: {
-    color: "#374151",
-    fontWeight: "500",
-    marginRight: 4,
-    fontSize: 14,
-  },
-  eventText: { color: "#6B7280", fontSize: 14 },
-  scrollView: { flex: 1 },
-  contentContainer: {
-    padding: 16,
-    backgroundColor: "#FFF",
-    margin: 16,
-    borderRadius: 12,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 16,
-    color: "#111827",
-    lineHeight: 22,
-  },
-  binaryHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-  },
-  marketImage: { width: 48, height: 48, borderRadius: 8 },
-  binaryTradeOptions: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginVertical: 8,
-  },
-  tradeButtonText: { fontSize: 14, fontWeight: "600", color: "#7C3AED" },
-  yesButton: {
-    flex: 1,
-    backgroundColor: "#EDEBFF",
-    padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
-    marginRight: 8,
-  },
-  noButton: {
-    flex: 1,
-    backgroundColor: "#ECFDF5",
-    padding: 12,
-    borderRadius: 8,
-    alignItems: "center",
-    marginRight: 8,
-  },
-  getAmount: {
-    color: "#6B7280",
-    fontSize: 14,
-    textAlign: "right",
-    minWidth: 60,
-  },
-  overviewContainer: { marginTop: 16 },
-  overviewTitle: {
-    fontWeight: "600",
-    marginBottom: 8,
-    fontSize: 16,
-    color: "#111827",
-  },
-  overviewText: { color: "#6B7280", lineHeight: 20, fontSize: 14 },
-  readMore: { color: "#7C3AED", fontWeight: "600" },
-  collapsiblesContainer: { marginHorizontal: 16, gap: 12 },
-  collapsibleContainer: {
-    backgroundColor: "#FFF",
-    borderRadius: 12,
-    overflow: "hidden",
-  },
-  collapsibleHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 16,
-  },
-  collapsibleTitle: { fontSize: 16, fontWeight: "600", color: "#111827" },
-  collapsibleContent: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    borderTopWidth: 1,
-    borderTopColor: "#F3F4F6",
-  },
-  comingSoon: { padding: 16, color: "#6B7280" },
-  rulesText: { lineHeight: 20, color: "#374151" },
-  sourceText: { lineHeight: 20, color: "#374151" },
-  eventDetailRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#F3F4F6",
-  },
-  eventDetailLabel: { color: "#6B7280", fontSize: 14 },
-  eventDetailValue: { fontWeight: "600", color: "#111827", fontSize: 14 },
-  orderBookContainer: {},
-  orderBookHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingBottom: 8,
-  },
-  orderBookTitle: {
-    color: "#6B7280",
-    flex: 1,
-    textAlign: "center",
-    fontSize: 12,
-  },
-  orderBookTitleYes: {
-    color: "#7C3AED",
-    fontWeight: "600",
-    flex: 1,
-    textAlign: "center",
-    fontSize: 12,
-  },
-  orderBookTitleNo: {
-    color: "#16A34A",
-    fontWeight: "600",
-    flex: 1,
-    textAlign: "center",
-    fontSize: 12,
-  },
-  orderBookRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 4,
-  },
-  orderBookPrice: {
-    flex: 1,
-    textAlign: "center",
-    fontWeight: "500",
-    fontSize: 14,
-  },
-  orderBookQty: {
-    flex: 1,
-    textAlign: "center",
-    paddingVertical: 4,
-    borderRadius: 4,
-    overflow: "hidden",
-    marginHorizontal: 4,
-    fontSize: 14,
-  },
-  stickyFooter: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    flexDirection: "row",
-    padding: 16,
-    gap: 16,
-    backgroundColor: "#FFF",
-    borderTopWidth: 1,
-    borderTopColor: "#E5E7EB",
-    paddingBottom: Platform.OS === "ios" ? 32 : 16,
-  },
-  footerYesButton: {
-    flex: 1,
-    backgroundColor: "#7C3AED",
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  footerNoButton: {
-    flex: 1,
-    backgroundColor: "#16A34A",
-    paddingVertical: 14,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  footerButtonText: { color: "#FFF", fontSize: 16, fontWeight: "600" },
-  multiOutcomeCard: {
-    backgroundColor: "#F9FAFB",
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-  },
-  multiOutcomeHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  multiOutcomeImage: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    marginRight: 12,
-  },
-  multiOutcomeLabel: { flex: 1, fontSize: 16, fontWeight: "600" },
-  multiOutcomeChance: {
-    backgroundColor: "#E5E7EB",
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 16,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "flex-start",
-    paddingTop: 80,
-  },
-  modalContent: {
-    backgroundColor: "#FFF",
-    marginHorizontal: 16,
-    borderRadius: 12,
-    padding: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 5,
-  },
-  categoryItem: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-  },
-  categoryItemText: {
-    fontSize: 16,
-    color: "#374151",
-  },
-  noButtonText: {
-    color: "#16A34A",
-    fontWeight: "600",
-    fontSize: 14,
-  },
-});

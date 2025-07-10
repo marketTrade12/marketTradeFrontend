@@ -1,20 +1,16 @@
 // pages/index.tsx
-import CategoryFilter from "@/components/CategoryFilter";
-import MarketCard from "@/components/MarketCard";
-import SortFilter from "@/components/SortFilter";
-import TradeBottomSheet from "@/components/TradeBottomSheet";
 import Icon from "@/components/ui/Icon";
-import { Colors } from "@/constants/Colors";
 import { marketData } from "@/constants/data";
-import { MarketCategory, TradeAction } from "@/constants/types";
+import { MarketCategory } from "@/constants/types";
 import { useBanners } from "@/hooks/useBanners";
-import { useColorScheme } from "@/hooks/useColorScheme";
-import { BottomSheetModal } from "@gorhom/bottom-sheet";
+import { useMarketSearch } from "@/hooks/useMarketSearch";
+import { useTheme } from "@/hooks/useThemeColor";
 import { useRouter } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import {
   Dimensions,
+  FlatList,
   Image,
   ImageBackground,
   Pressable,
@@ -25,76 +21,251 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import CategoryFilter from "../../components/CategoryFilter";
+import MarketCard from "../../components/MarketCard";
+import SearchBar from "../../components/SearchBar";
+import SortFilter from "../../components/SortFilter";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const SCREEN_WIDTH = Dimensions.get("window").width;
 
 type CategoryType = "all" | MarketCategory;
 
-const AVAILABLE_CATEGORIES: CategoryType[] = [
-  "all",
-  "sports",
-  "politics",
-  "crypto",
-  "economics",
-  "technology",
-  "entertainment",
-  "business",
-  "science",
-  "news",
-];
-
 export default function HomeScreen() {
-  const colorScheme = useColorScheme();
-  const banners = useBanners();
-  const theme = Colors[colorScheme ?? "light"];
-  const sheetRef = useRef<BottomSheetModal>(null);
-  const [tradeMeta, setTradeMeta] = useState<TradeAction | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<CategoryType>("all");
-  const [sortBy, setSortBy] = useState<
+  const [sortOption, setSortOption] = useState<
     "volume" | "newest" | "ending_soon" | "price_change"
   >("volume");
-
-  useEffect(() => {
-    if (tradeMeta) {
-      sheetRef.current?.present();
-    }
-  }, [tradeMeta]);
-
   const router = useRouter();
+  const theme = useTheme();
 
-  // Filter markets based on category
-  const filteredMarkets = marketData.filter(
-    (market) =>
-      selectedCategory === "all" || market.category === selectedCategory
-  );
+  const banners = useBanners();
+  const {
+    filteredMarkets,
+    setSearchQuery: setMarketSearchQuery,
+    setSelectedCategory: setMarketCategory,
+    setSortBy,
+  } = useMarketSearch(marketData);
+
+  const handleCategorySelect = (category: CategoryType) => {
+    setSelectedCategory(category);
+    setMarketCategory(category);
+  };
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    setMarketSearchQuery(query);
+  };
+
+  const handleSortChange = (
+    sort: "volume" | "newest" | "ending_soon" | "price_change"
+  ) => {
+    setSortOption(sort);
+    setSortBy(sort);
+  };
+
+  const handleClearFilters = () => {
+    setSelectedCategory("all");
+    setSearchQuery("");
+    setSortOption("volume");
+    setMarketCategory("all");
+    setMarketSearchQuery("");
+    setSortBy("volume");
+  };
 
   const renderEmptyState = () => (
     <View style={styles.emptyState}>
-      <Text style={[styles.emptyStateTitle, { color: theme.text }]}>
+      <Text style={[styles.emptyTitle, { color: theme.colors.text }]}>
         No markets found
       </Text>
-      <Text style={[styles.emptyStateText, { color: theme.textSecondary }]}>
-        Try adjusting your filters
+      <Text
+        style={[styles.emptySubtitle, { color: theme.colors.textSecondary }]}
+      >
+        Try adjusting your search or filters
       </Text>
       <Pressable
-        style={[styles.clearButton, { backgroundColor: theme.primary }]}
-        onPress={() => setSelectedCategory("all")}
+        style={[styles.clearButton, { backgroundColor: theme.colors.primary }]}
+        onPress={handleClearFilters}
       >
-        <Text style={styles.clearButtonText}>Clear Filters</Text>
+        <Text
+          style={[styles.clearButtonText, { color: theme.colors.textInverse }]}
+        >
+          Clear Filters
+        </Text>
       </Pressable>
     </View>
   );
 
+  const styles = StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background,
+    },
+    safeArea: {
+      flex: 1,
+      backgroundColor: theme.colors.primary,
+    },
+    bannerButton: {
+      backgroundColor: theme.colors.background,
+      borderRadius: theme.borderRadius.md,
+      padding: theme.spacing.xs,
+      marginRight: theme.spacing.xs,
+      ...theme.shadows.small,
+    },
+    bannerButtonSecondary: {
+      backgroundColor: theme.colors.background,
+      borderRadius: theme.borderRadius.md,
+      paddingHorizontal: theme.spacing.sm,
+      paddingVertical: theme.spacing.xs,
+      ...theme.shadows.small,
+    },
+    bannerButtonText: {
+      color: theme.colors.primary,
+      fontFamily: theme.typography.button.fontFamily,
+      fontWeight: theme.typography.button.fontWeight,
+      fontSize: theme.typography.caption.fontSize,
+    },
+    tradeButton: {
+      backgroundColor: theme.colors.secondary,
+      borderRadius: theme.borderRadius.md,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+      flexDirection: "row",
+      alignItems: "center",
+      ...theme.shadows.small,
+    },
+    tradeButtonText: {
+      color: theme.colors.black,
+      fontFamily: theme.typography.button.fontFamily,
+      fontWeight: theme.typography.button.fontWeight,
+      fontSize: theme.typography.subHeading.fontSize,
+    },
+    categoriesHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      marginBottom: theme.spacing.md,
+      paddingHorizontal: theme.spacing.md,
+    },
+    categoriesTitle: {
+      fontFamily: theme.typography.h3.fontFamily,
+      fontSize: theme.typography.h3.fontSize,
+      fontWeight: theme.typography.h3.fontWeight,
+      color: theme.colors.text,
+    },
+    seeAllText: {
+      fontFamily: theme.typography.body1.fontFamily,
+      fontSize: theme.typography.body1.fontSize,
+      fontWeight: theme.typography.body1.fontWeight,
+      color: theme.colors.primary,
+    },
+    categoryWrapper: {
+      backgroundColor: theme.colors.background,
+    },
+    categoryContainer: {
+      flexDirection: "row",
+      paddingHorizontal: theme.spacing.md,
+      marginBottom: theme.spacing.lg,
+    },
+    stickyAllCategory: {
+      backgroundColor: theme.colors.background,
+      borderRadius: theme.borderRadius.lg,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+      flexDirection: "row",
+      alignItems: "center",
+      marginRight: theme.spacing.sm,
+      borderBottomWidth: 2,
+      borderBottomColor:
+        selectedCategory === "all" ? theme.colors.primary : "transparent",
+    },
+    stickyAllCategoryText: {
+      marginLeft: theme.spacing.xs,
+      fontFamily: theme.typography.body1.fontFamily,
+      fontSize: theme.typography.body1.fontSize,
+    },
+    activeIndicator: {
+      height: 2,
+      width: theme.spacing.lg,
+      backgroundColor: theme.colors.primary,
+      borderRadius: theme.borderRadius.xs,
+      marginTop: theme.spacing.xs,
+    },
+    searchFilterContainer: {
+      paddingHorizontal: theme.spacing.md,
+      marginBottom: theme.spacing.md,
+    },
+    marketsHeader: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      alignItems: "center",
+      paddingHorizontal: theme.spacing.md,
+      marginBottom: theme.spacing.md,
+      borderBottomWidth: 1,
+      borderBottomColor: theme.colors.border,
+      paddingBottom: theme.spacing.sm,
+    },
+    marketsTitle: {
+      fontFamily: theme.typography.h3.fontFamily,
+      fontSize: theme.typography.h3.fontSize,
+      fontWeight: theme.typography.h3.fontWeight,
+      color: theme.colors.text,
+    },
+    marketsContainer: {
+      flex: 1,
+      paddingHorizontal: theme.spacing.md,
+    },
+    marketsList: {
+      paddingBottom: theme.spacing.xl,
+    },
+    emptyState: {
+      flex: 1,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingVertical: theme.spacing.xxxl,
+    },
+    emptyTitle: {
+      fontFamily: theme.typography.h3.fontFamily,
+      fontSize: theme.typography.h3.fontSize,
+      fontWeight: theme.typography.h3.fontWeight,
+      marginBottom: theme.spacing.sm,
+    },
+    emptySubtitle: {
+      fontFamily: theme.typography.body1.fontFamily,
+      fontSize: theme.typography.body1.fontSize,
+      textAlign: "center",
+      lineHeight: theme.typography.body1.lineHeight,
+      marginBottom: theme.spacing.lg,
+    },
+    clearButton: {
+      paddingHorizontal: theme.spacing.lg,
+      paddingVertical: theme.spacing.sm,
+      borderRadius: theme.borderRadius.sm,
+    },
+    clearButtonText: {
+      fontFamily: theme.typography.button.fontFamily,
+      fontSize: theme.typography.button.fontSize,
+      fontWeight: theme.typography.button.fontWeight,
+    },
+    scrollContent: {
+      flex: 1,
+    },
+  });
+
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: "#B565FD" }}>
-      <StatusBar style="light" backgroundColor="#B565FD" translucent={true} />
-      <View style={[styles.container, { backgroundColor: "#fff" }]}>
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar
+        style="light"
+        backgroundColor={theme.colors.primary}
+        translucent={true}
+      />
+      <View style={styles.container}>
         {/* Banner Section (market_3 image, logo, how to play, wallet, trade now) */}
         {selectedCategory === "all" && banners.length > 0 && (
           <View style={{ marginBottom: 0 }}>
             {banners
-              .filter((b) => String(b.id) === "market_3")
-              .map((banner) => (
+              .filter((b: any) => String(b.id) === "market_3")
+              .map((banner: any) => (
                 <View
                   key={banner.id}
                   style={{
@@ -120,8 +291,8 @@ export default function HomeScreen() {
                   <View
                     style={{
                       position: "absolute",
-                      top: 14,
-                      left: 16,
+                      top: theme.spacing.sm,
+                      left: theme.spacing.md,
                       zIndex: 2,
                     }}
                   >
@@ -134,55 +305,29 @@ export default function HomeScreen() {
                   <View
                     style={{
                       position: "absolute",
-                      top: 12,
-                      right: 16,
+                      top: theme.spacing.sm,
+                      right: theme.spacing.md,
                       flexDirection: "row",
                       alignItems: "center",
                       zIndex: 2,
                     }}
                   >
                     <TouchableOpacity
-                      style={{
-                        backgroundColor: "#fff",
-                        borderRadius: 16,
-                        padding: 4,
-                        marginRight: 6,
-                        shadowColor: "#000",
-                        shadowOpacity: 0.08,
-                        shadowRadius: 2,
-                        elevation: 1,
-                      }}
+                      style={styles.bannerButton}
                       onPress={() => router.push("/wallet")}
                     >
                       <Icon
                         name="wallet"
                         set="ionicons"
                         size={18}
-                        color="#5f2c82"
+                        color={theme.colors.primary}
                       />
                     </TouchableOpacity>
                     <TouchableOpacity
-                      style={{
-                        backgroundColor: "#fff",
-                        borderRadius: 16,
-                        paddingHorizontal: 10,
-                        paddingVertical: 4,
-                        shadowColor: "#000",
-                        shadowOpacity: 0.08,
-                        shadowRadius: 2,
-                        elevation: 1,
-                      }}
+                      style={styles.bannerButtonSecondary}
                       onPress={() => router.push("/how-to-play")}
                     >
-                      <Text
-                        style={{
-                          color: "#5f2c82",
-                          fontWeight: "600",
-                          fontSize: 13,
-                        }}
-                      >
-                        How to play
-                      </Text>
+                      <Text style={styles.bannerButtonText}>How to play</Text>
                     </TouchableOpacity>
                   </View>
                   {/* Trade now button (smaller, at top center below logo/buttons) */}
@@ -191,31 +336,18 @@ export default function HomeScreen() {
                       position: "absolute",
                       bottom: -7,
                       alignSelf: "center",
-                      backgroundColor: "#b6ff6a",
-                      borderRadius: 16,
-                      paddingHorizontal: 18,
-                      paddingVertical: 7,
-                      flexDirection: "row",
-                      alignItems: "center",
-                      shadowColor: "#000",
-                      shadowOpacity: 0.08,
-                      shadowRadius: 2,
-                      elevation: 1,
+                      ...styles.tradeButton,
                       zIndex: 2,
                     }}
                     onPress={() => router.push("/market/market_3")}
                   >
-                    <Text
-                      style={{ color: "#222", fontWeight: "700", fontSize: 15 }}
-                    >
-                      Trade now
-                    </Text>
-                    <View style={{ marginLeft: 4 }}>
+                    <Text style={styles.tradeButtonText}>Trade now</Text>
+                    <View style={{ marginLeft: theme.spacing.xs }}>
                       <Icon
                         name="arrow-right"
                         set="feather"
                         size={16}
-                        color="#222"
+                        color={theme.colors.black}
                       />
                     </View>
                   </TouchableOpacity>
@@ -224,8 +356,6 @@ export default function HomeScreen() {
           </View>
         )}
 
-        {/* Sticky Header */}
-
         {/* Scrollable Content */}
         <ScrollView
           style={styles.scrollContent}
@@ -233,224 +363,95 @@ export default function HomeScreen() {
         >
           {/* Categories Header */}
           <View style={styles.categoriesHeader}>
-            <Text style={[styles.categoriesTitle, { color: theme.text }]}>
-              Categories
-            </Text>
+            <Text style={styles.categoriesTitle}>Categories</Text>
             <TouchableOpacity onPress={() => {}}>
-              <Text style={[styles.seeAllText, { color: "#7C3AED" }]}>
-                See all
-              </Text>
+              <Text style={styles.seeAllText}>See all</Text>
             </TouchableOpacity>
           </View>
 
           {/* Category Filter Chips */}
-          <View
-            style={[
-              styles.categoryWrapper,
-              { backgroundColor: theme.background },
-            ]}
-          >
+          <View style={styles.categoryWrapper}>
             <View style={styles.categoryContainer}>
               <TouchableOpacity
-                style={[
-                  styles.stickyAllCategory,
-                  { backgroundColor: theme.background },
-                ]}
-                onPress={() => setSelectedCategory("all")}
+                style={styles.stickyAllCategory}
+                onPress={() => handleCategorySelect("all")}
               >
                 <Icon
                   name="grid"
                   set="feather"
                   size={24}
-                  color={selectedCategory === "all" ? theme.primary : "#9CA3AF"}
+                  color={
+                    selectedCategory === "all"
+                      ? theme.colors.primary
+                      : theme.colors.grey
+                  }
                 />
                 <Text
                   style={[
                     styles.stickyAllCategoryText,
                     {
                       color:
-                        selectedCategory === "all" ? theme.text : "#6B7280",
-                      fontWeight: selectedCategory === "all" ? "600" : "500",
+                        selectedCategory === "all"
+                          ? theme.colors.text
+                          : theme.colors.textSecondary,
+                      fontWeight:
+                        selectedCategory === "all"
+                          ? theme.typography.body1.fontWeight
+                          : theme.typography.body2.fontWeight,
                     },
                   ]}
                 >
                   All
                 </Text>
                 {selectedCategory === "all" && (
-                  <View
-                    style={[
-                      styles.selectedIndicator,
-                      { backgroundColor: theme.primary },
-                    ]}
-                  />
+                  <View style={styles.activeIndicator} />
                 )}
               </TouchableOpacity>
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={styles.categoryScroll}
-              >
-                <CategoryFilter
-                  categories={AVAILABLE_CATEGORIES.filter(
-                    (cat) => cat !== "all"
-                  )}
-                  selectedCategory={selectedCategory}
-                  onCategorySelect={setSelectedCategory}
-                />
-              </ScrollView>
+              <CategoryFilter
+                selectedCategory={selectedCategory}
+                onCategorySelect={handleCategorySelect}
+                categories={[
+                  "sports",
+                  "politics",
+                  "crypto",
+                  "entertainment",
+                  "technology",
+                ]}
+              />
             </View>
           </View>
 
-          {/* Controls Header - Results count only */}
-          <View style={styles.resultsHeader}>
-            <Text style={[styles.resultsText, { color: theme.textSecondary }]}>
-              {selectedCategory !== "all"
-                ? `${filteredMarkets.length} markets in ${selectedCategory}`
-                : `${filteredMarkets.length} markets available`}
-            </Text>
-            <SortFilter currentSort={sortBy} onSortChange={setSortBy} />
+          {/* Search and Sort Section */}
+          <View style={styles.searchFilterContainer}>
+            <SearchBar value={searchQuery} onChangeText={handleSearchChange} />
           </View>
 
-          {/* Markets list */}
+          {/* Markets Header with Sort */}
+          <View style={styles.marketsHeader}>
+            <Text style={styles.marketsTitle}>Markets</Text>
+            <SortFilter
+              currentSort={sortOption}
+              onSortChange={handleSortChange}
+            />
+          </View>
+
+          {/* Markets List */}
           <View style={styles.marketsContainer}>
-            {filteredMarkets.map((item) => (
-              <MarketCard
-                key={item.id}
-                item={item}
-                onVote={(meta) => setTradeMeta(meta)}
+            {filteredMarkets.length === 0 ? (
+              renderEmptyState()
+            ) : (
+              <FlatList
+                data={filteredMarkets}
+                renderItem={({ item }) => <MarketCard item={item} />}
+                keyExtractor={(item) => item.id}
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.marketsList}
+                scrollEnabled={false}
               />
-            ))}
-            {filteredMarkets.length === 0 && renderEmptyState()}
+            )}
           </View>
         </ScrollView>
-
-        {/* Trade bottom sheet */}
-        {tradeMeta && (
-          <TradeBottomSheet
-            ref={sheetRef}
-            detailId={tradeMeta.detailId}
-            actionType={tradeMeta.actionType}
-            optionLabel={tradeMeta.label}
-            onClose={() => setTradeMeta(null)}
-          />
-        )}
       </View>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollContent: {
-    flex: 1,
-  },
-  categoryWrapper: {
-    borderBottomWidth: 1,
-    borderBottomColor: "#E5E7EB",
-  },
-  controlsHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    gap: 12,
-  },
-  resultsInfo: {
-    flex: 1,
-  },
-  resultsText: {
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  bannerContainer: {
-    paddingVertical: 12,
-  },
-  bannerWrapper: {
-    width: SCREEN_WIDTH,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  bannerImage: {
-    height: 200,
-    borderRadius: 12,
-  },
-  marketsContainer: {
-    paddingBottom: 100,
-  },
-  emptyState: {
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 32,
-    paddingVertical: 64,
-  },
-  emptyStateTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    marginBottom: 8,
-    textAlign: "center",
-  },
-  emptyStateText: {
-    fontSize: 16,
-    textAlign: "center",
-    marginBottom: 24,
-    lineHeight: 22,
-  },
-  clearButton: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    borderRadius: 8,
-  },
-  clearButtonText: {
-    color: "#FFFFFF",
-    fontSize: 16,
-    fontWeight: "600",
-  },
-  categoriesHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  categoriesTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-  },
-  seeAllText: {
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  resultsHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  },
-  categoryContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  stickyAllCategory: {
-    alignItems: "center",
-    marginHorizontal: 12,
-    paddingBottom: 8,
-    paddingTop: 4,
-  },
-  stickyAllCategoryText: {
-    fontSize: 12,
-    marginTop: 4,
-  },
-  selectedIndicator: {
-    height: 2,
-    width: 24,
-    borderRadius: 1,
-    marginTop: 4,
-  },
-  categoryScroll: {
-    flexGrow: 0,
-  },
-});

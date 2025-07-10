@@ -1,253 +1,409 @@
-import { useRouter } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import React, { useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import Icon from "@/components/ui/Icon";
+import { useTheme } from "@/hooks/useThemeColor";
+import { useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import React, { useMemo, useState } from "react";
+import {
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import Icon from '@/components/ui/Icon';
-import { Colors } from '@/constants/Colors';
-import { Language, useLanguage } from '@/contexts/LanguageContext';
-import { useColorScheme } from '@/hooks/useColorScheme';
+interface Language {
+  code: string;
+  name: string;
+  nativeName: string;
+  flag: string;
+  isSelected: boolean;
+}
 
-export default function LanguageSelection() {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? 'light'];
+const languages: Language[] = [
+  {
+    code: "en",
+    name: "English",
+    nativeName: "English",
+    flag: "🇺🇸",
+    isSelected: true,
+  },
+  {
+    code: "hi",
+    name: "Hindi",
+    nativeName: "हिन्दी",
+    flag: "🇮🇳",
+    isSelected: false,
+  },
+  {
+    code: "es",
+    name: "Spanish",
+    nativeName: "Español",
+    flag: "🇪🇸",
+    isSelected: false,
+  },
+  {
+    code: "fr",
+    name: "French",
+    nativeName: "Français",
+    flag: "🇫🇷",
+    isSelected: false,
+  },
+  {
+    code: "de",
+    name: "German",
+    nativeName: "Deutsch",
+    flag: "🇩🇪",
+    isSelected: false,
+  },
+  {
+    code: "pt",
+    name: "Portuguese",
+    nativeName: "Português",
+    flag: "🇵🇹",
+    isSelected: false,
+  },
+  {
+    code: "zh",
+    name: "Chinese",
+    nativeName: "中文",
+    flag: "🇨🇳",
+    isSelected: false,
+  },
+  {
+    code: "ja",
+    name: "Japanese",
+    nativeName: "日本語",
+    flag: "🇯🇵",
+    isSelected: false,
+  },
+  {
+    code: "ko",
+    name: "Korean",
+    nativeName: "한국어",
+    flag: "🇰🇷",
+    isSelected: false,
+  },
+  {
+    code: "ar",
+    name: "Arabic",
+    nativeName: "العربية",
+    flag: "🇸🇦",
+    isSelected: false,
+  },
+];
+
+export default function LanguageSelectionScreen() {
+  const [selectedLanguages, setSelectedLanguages] = useState(languages);
   const router = useRouter();
-  const { currentLanguage, availableLanguages, changeLanguage, t, loading } = useLanguage();
-  const [isChanging, setIsChanging] = useState(false);
+  const theme = useTheme();
 
-  const handleLanguageSelect = async (language: Language) => {
-    if (language.code === currentLanguage.code) {
-      router.back();
-      return;
-    }
-
-    try {
-      setIsChanging(true);
-      await changeLanguage(language.code);
-      router.back();
-    } catch (error) {
-      console.error('Error changing language:', error);
-    } finally {
-      setIsChanging(false);
-    }
-  };
-
-  const renderLanguageItem = ({ item }: { item: Language }) => {
-    const isSelected = item.code === currentLanguage.code;
-    
-    return (
-      <Pressable
-        style={[
-          styles.languageItem,
-          { 
-            backgroundColor: theme.surface,
-            borderColor: isSelected ? theme.primary : theme.border
-          }
-        ]}
-        onPress={() => handleLanguageSelect(item)}
-        disabled={isChanging}
-      >
-        <View style={styles.languageContent}>
-          <Text style={styles.flag}>{item.flag}</Text>
-          <View style={styles.languageInfo}>
-            <Text style={[styles.languageName, { color: theme.text }]}>
-              {item.name}
-            </Text>
-            <Text style={[styles.nativeName, { color: theme.textSecondary }]}>
-              {item.nativeName}
-            </Text>
-          </View>
-        </View>
-        
-        <View style={styles.languageActions}>
-          {isSelected && (
-            <View style={[styles.selectedBadge, { backgroundColor: theme.primary }]}>
-              <Icon name="check" set="feather" size={16} color="#FFFFFF" />
-            </View>
-          )}
-          {isChanging && item.code === currentLanguage.code && (
-            <ActivityIndicator size="small" color={theme.primary} />
-          )}
-        </View>
-      </Pressable>
+  const handleLanguageSelect = (code: string) => {
+    setSelectedLanguages((prev) =>
+      prev.map((lang) => ({
+        ...lang,
+        isSelected: lang.code === code ? !lang.isSelected : lang.isSelected,
+      }))
     );
   };
 
-  const renderHeader = () => (
-    <View style={styles.headerSection}>
-      <Text style={[styles.sectionTitle, { color: theme.text }]}>
-        {t('current_language', 'Current Language')}
-      </Text>
-      <View style={[styles.currentLanguageCard, { backgroundColor: theme.surface }]}>
-        <Text style={styles.currentFlag}>{currentLanguage.flag}</Text>
-        <View style={styles.currentLanguageInfo}>
-          <Text style={[styles.currentLanguageName, { color: theme.text }]}>
-            {currentLanguage.name}
-          </Text>
-          <Text style={[styles.currentNativeName, { color: theme.textSecondary }]}>
-            {currentLanguage.nativeName}
-          </Text>
-        </View>
-      </View>
-      
-      <Text style={[styles.sectionTitle, { color: theme.text, marginTop: 24 }]}>
-        {t('select_language', 'Select Language')}
-      </Text>
-    </View>
+  const selectedCount = selectedLanguages.filter(
+    (lang) => lang.isSelected
+  ).length;
+
+  const dynamicStyles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          flex: 1,
+          backgroundColor: theme.colors.background,
+        },
+        header: {
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          paddingHorizontal: theme.spacing.md,
+          paddingVertical: theme.spacing.lg,
+        },
+        headerLeft: {
+          flexDirection: "row",
+          alignItems: "center",
+        },
+        backButton: {
+          width: 40,
+          height: 40,
+          borderRadius: theme.borderRadius.lg,
+          backgroundColor: theme.colors.surface,
+          alignItems: "center",
+          justifyContent: "center",
+          marginRight: theme.spacing.sm,
+        },
+        headerTitle: {
+          fontSize: theme.typography.h2.fontSize,
+          fontWeight: theme.typography.h2.fontWeight,
+          fontFamily: theme.typography.h2.fontFamily,
+          color: theme.colors.text,
+        },
+        languageItem: {
+          flexDirection: "row",
+          alignItems: "center",
+          paddingHorizontal: theme.spacing.md,
+          paddingVertical: theme.spacing.lg,
+          borderBottomWidth: 1,
+          borderBottomColor: theme.colors.border,
+        },
+        flagContainer: {
+          width: 40,
+          height: 40,
+          borderRadius: theme.borderRadius.lg,
+          backgroundColor: theme.colors.surface,
+          alignItems: "center",
+          justifyContent: "center",
+          marginRight: theme.spacing.md,
+        },
+        flag: {
+          fontSize: theme.typography.h3.fontSize,
+        },
+        languageInfo: {
+          flex: 1,
+        },
+        languageName: {
+          fontSize: theme.typography.body1.fontSize,
+          fontWeight: theme.typography.body1.fontWeight,
+          fontFamily: theme.typography.body1.fontFamily,
+          color: theme.colors.text,
+          marginBottom: theme.spacing.xs,
+        },
+        nativeName: {
+          fontSize: theme.typography.body2.fontSize,
+          fontFamily: theme.typography.body2.fontFamily,
+          color: theme.colors.textSecondary,
+        },
+        checkbox: {
+          width: 24,
+          height: 24,
+          borderRadius: theme.borderRadius.sm,
+          borderWidth: 2,
+          alignItems: "center",
+          justifyContent: "center",
+        },
+        checkboxSelected: {
+          backgroundColor: theme.colors.primary,
+          borderColor: theme.colors.primary,
+        },
+        checkboxUnselected: {
+          backgroundColor: "transparent",
+          borderColor: theme.colors.border,
+        },
+        sectionHeader: {
+          paddingHorizontal: theme.spacing.md,
+          paddingVertical: theme.spacing.sm,
+          backgroundColor: theme.colors.surface,
+        },
+        sectionTitle: {
+          fontSize: theme.typography.subHeading.fontSize,
+          fontWeight: theme.typography.subHeading.fontWeight,
+          fontFamily: theme.typography.subHeading.fontFamily,
+          color: theme.colors.textSecondary,
+        },
+        selectedSection: {
+          backgroundColor: theme.colors.cardBackground,
+          borderRadius: theme.borderRadius.md,
+          marginHorizontal: theme.spacing.md,
+          marginVertical: theme.spacing.sm,
+          ...theme.shadows.small,
+        },
+        selectedSectionHeader: {
+          flexDirection: "row",
+          alignItems: "center",
+          paddingHorizontal: theme.spacing.md,
+          paddingVertical: theme.spacing.sm,
+          gap: theme.spacing.sm,
+        },
+        selectedTitle: {
+          fontSize: theme.typography.body1.fontSize,
+          fontWeight: theme.typography.body1.fontWeight,
+          fontFamily: theme.typography.body1.fontFamily,
+          color: theme.colors.text,
+        },
+        selectedBadge: {
+          backgroundColor: theme.colors.primary,
+          borderRadius: theme.borderRadius.full,
+          width: 20,
+          height: 20,
+          alignItems: "center",
+          justifyContent: "center",
+        },
+        selectedBadgeText: {
+          fontSize: theme.typography.caption.fontSize,
+          fontWeight: theme.typography.caption.fontWeight,
+          fontFamily: theme.typography.caption.fontFamily,
+          color: theme.colors.textInverse,
+        },
+        selectedLanguages: {
+          flexDirection: "row",
+          flexWrap: "wrap",
+          paddingHorizontal: theme.spacing.md,
+          paddingBottom: theme.spacing.md,
+          gap: theme.spacing.sm,
+        },
+        selectedChip: {
+          flexDirection: "row",
+          alignItems: "center",
+          backgroundColor: theme.colors.primaryLight,
+          paddingHorizontal: theme.spacing.sm,
+          paddingVertical: theme.spacing.xs,
+          borderRadius: theme.borderRadius.md,
+          gap: theme.spacing.xs,
+        },
+        selectedChipText: {
+          fontSize: theme.typography.body2.fontSize,
+          fontFamily: theme.typography.body2.fontFamily,
+          color: theme.colors.primary,
+        },
+        removeButton: {
+          width: 16,
+          height: 16,
+          borderRadius: theme.borderRadius.full,
+          backgroundColor: theme.colors.primary,
+          alignItems: "center",
+          justifyContent: "center",
+        },
+        emptyState: {
+          paddingVertical: theme.spacing.xl,
+          alignItems: "center",
+        },
+        emptyText: {
+          fontSize: theme.typography.body1.fontSize,
+          fontFamily: theme.typography.body1.fontFamily,
+          color: theme.colors.textSecondary,
+          textAlign: "center",
+        },
+      }),
+    [theme]
   );
 
-  if (loading) {
-    return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-        <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.primary} />
-          <Text style={[styles.loadingText, { color: theme.textSecondary }]}>
-            Loading languages...
+  const renderLanguageItem = ({ item }: { item: Language }) => (
+    <TouchableOpacity
+      style={dynamicStyles.languageItem}
+      onPress={() => handleLanguageSelect(item.code)}
+      activeOpacity={0.7}
+    >
+      <View style={dynamicStyles.flagContainer}>
+        <Text style={dynamicStyles.flag}>{item.flag}</Text>
+      </View>
+      <View style={dynamicStyles.languageInfo}>
+        <Text style={dynamicStyles.languageName}>{item.name}</Text>
+        <Text style={dynamicStyles.nativeName}>{item.nativeName}</Text>
+      </View>
+      <View
+        style={[
+          dynamicStyles.checkbox,
+          item.isSelected
+            ? dynamicStyles.checkboxSelected
+            : dynamicStyles.checkboxUnselected,
+        ]}
+      >
+        {item.isSelected && (
+          <Icon
+            name="check"
+            set="feather"
+            size={16}
+            color={theme.colors.textInverse}
+          />
+        )}
+      </View>
+    </TouchableOpacity>
+  );
+
+  const renderSelectedLanguages = () => {
+    const selected = selectedLanguages.filter((lang) => lang.isSelected);
+
+    if (selected.length === 0) {
+      return (
+        <View style={dynamicStyles.emptyState}>
+          <Text style={dynamicStyles.emptyText}>
+            No languages selected yet. Choose your preferred languages from the
+            list below.
           </Text>
         </View>
-      </SafeAreaView>
+      );
+    }
+
+    return (
+      <View style={dynamicStyles.selectedLanguages}>
+        {selected.map((lang) => (
+          <View key={lang.code} style={dynamicStyles.selectedChip}>
+            <Text>{lang.flag}</Text>
+            <Text style={dynamicStyles.selectedChipText}>{lang.name}</Text>
+            <TouchableOpacity
+              style={dynamicStyles.removeButton}
+              onPress={() => handleLanguageSelect(lang.code)}
+            >
+              <Icon
+                name="x"
+                set="feather"
+                size={12}
+                color={theme.colors.textInverse}
+              />
+            </TouchableOpacity>
+          </View>
+        ))}
+      </View>
     );
-  }
+  };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-      
+    <SafeAreaView style={dynamicStyles.container}>
+      <StatusBar
+        style={theme.isLight ? "dark" : "light"}
+        backgroundColor={theme.colors.background}
+      />
+
       {/* Header */}
-      <View style={[styles.header, { borderBottomColor: theme.border }]}>
-        <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <Icon name="arrow-left" set="feather" size={24} color={theme.text} />
-        </Pressable>
-        <Text style={[styles.headerTitle, { color: theme.text }]}>
-          {t('language', 'Language')}
-        </Text>
-        <View style={styles.headerRight} />
+      <View style={dynamicStyles.header}>
+        <View style={dynamicStyles.headerLeft}>
+          <TouchableOpacity
+            style={dynamicStyles.backButton}
+            onPress={() => router.back()}
+          >
+            <Icon
+              name="arrow-left"
+              set="feather"
+              size={20}
+              color={theme.colors.text}
+            />
+          </TouchableOpacity>
+          <Text style={dynamicStyles.headerTitle}>Language Settings</Text>
+        </View>
       </View>
 
-      {/* Language List */}
+      {/* Selected Languages Section */}
+      {selectedCount > 0 && (
+        <View style={dynamicStyles.selectedSection}>
+          <View style={dynamicStyles.selectedSectionHeader}>
+            <Text style={dynamicStyles.selectedTitle}>Selected Languages</Text>
+            <View style={dynamicStyles.selectedBadge}>
+              <Text style={dynamicStyles.selectedBadgeText}>
+                {selectedCount}
+              </Text>
+            </View>
+          </View>
+          {renderSelectedLanguages()}
+        </View>
+      )}
+
+      {/* Available Languages Section */}
+      <View style={dynamicStyles.sectionHeader}>
+        <Text style={dynamicStyles.sectionTitle}>AVAILABLE LANGUAGES</Text>
+      </View>
+
       <FlatList
-        data={availableLanguages}
-        keyExtractor={(item) => item.code}
+        data={languages}
         renderItem={renderLanguageItem}
-        ListHeaderComponent={renderHeader}
-        contentContainerStyle={styles.listContainer}
+        keyExtractor={(item) => item.code}
         showsVerticalScrollIndicator={false}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
       />
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 16,
-  },
-  loadingText: {
-    fontSize: 16,
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  headerRight: {
-    width: 40,
-  },
-  listContainer: {
-    padding: 16,
-  },
-  headerSection: {
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 12,
-  },
-  currentLanguageCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 12,
-    gap: 12,
-  },
-  currentFlag: {
-    fontSize: 32,
-  },
-  currentLanguageInfo: {
-    flex: 1,
-  },
-  currentLanguageName: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  currentNativeName: {
-    fontSize: 14,
-  },
-  languageItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-  },
-  languageContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    gap: 12,
-  },
-  flag: {
-    fontSize: 24,
-  },
-  languageInfo: {
-    flex: 1,
-  },
-  languageName: {
-    fontSize: 16,
-    fontWeight: '500',
-    marginBottom: 2,
-  },
-  nativeName: {
-    fontSize: 14,
-  },
-  languageActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  selectedBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  separator: {
-    height: 8,
-  },
-}); 

@@ -1,5 +1,4 @@
-import { Colors } from "@/constants/Colors";
-import { useColorScheme } from "@/hooks/useColorScheme";
+import { useTheme } from "@/hooks/useThemeColor";
 import { Feather } from "@expo/vector-icons";
 import React from "react";
 import { StyleSheet, TextInput, TouchableOpacity, View } from "react-native";
@@ -11,54 +10,57 @@ interface SearchBarProps {
   placeholder?: string;
 }
 
-export default function SearchBar({ 
-  value, 
-  onChangeText, 
+export default function SearchBar({
+  value,
+  onChangeText,
   onFilterPress,
-  placeholder = "Search markets, topics, events..."
+  placeholder = "Search markets, topics, events...",
 }: SearchBarProps) {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
+  const theme = useTheme();
+
+  const styles = StyleSheet.create({
+    container: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.borderRadius.md,
+      paddingHorizontal: theme.spacing.md,
+      paddingVertical: theme.spacing.sm,
+      marginHorizontal: theme.spacing.lg,
+      marginVertical: theme.spacing.sm,
+      gap: theme.spacing.sm,
+      ...theme.shadows.small,
+    },
+    input: {
+      flex: 1,
+      fontSize: theme.typography.body1.fontSize,
+      fontFamily: theme.typography.body1.fontFamily,
+      color: theme.colors.text,
+      paddingVertical: theme.spacing.xs,
+    },
+  });
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.surface }]}>
-      <Feather name="search" size={18} color={theme.textSecondary} />
+    <View style={styles.container}>
+      <Feather name="search" size={18} color={theme.colors.textSecondary} />
       <TextInput
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
-        placeholderTextColor={theme.textSecondary}
-        style={[styles.input, { color: theme.text }]}
+        placeholderTextColor={theme.colors.textSecondary}
+        style={styles.input}
         autoCorrect={false}
         autoCapitalize="none"
       />
       {onFilterPress && (
         <TouchableOpacity onPress={onFilterPress}>
-          <Feather name="sliders" size={18} color={theme.textSecondary} />
+          <Feather
+            name="sliders"
+            size={18}
+            color={theme.colors.textSecondary}
+          />
         </TouchableOpacity>
       )}
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    borderRadius: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 16,
-    marginHorizontal: 16,
-    marginVertical: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  input: {
-    flex: 1,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    fontSize: 16,
-  },
-});

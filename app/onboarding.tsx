@@ -165,13 +165,25 @@ const Onboarding = () => {
   };
 
   const handleGetStarted = async () => {
-    await markOnboardingComplete();
-    const user = useAuthStore.getState().user;
+    console.log("Get Started button pressed!");
+    alert("Button pressed!"); // Temporary debug alert
 
-    if (!user?.isLoggedIn) {
+    try {
+      // Mark onboarding as complete first
+      await markOnboardingComplete();
+      console.log("Onboarding marked as complete");
+
+      // Check current user state
+      const user = useAuthStore.getState().user;
+      console.log("Current user state:", user);
+
+      // Always go to login screen after onboarding since user needs to authenticate
+      console.log("Navigating to login...");
       router.replace("/(auth)/login");
-    } else {
-      router.replace("/(tabs)");
+    } catch (error) {
+      console.error("Error in handleGetStarted:", error);
+      // Fallback navigation
+      router.replace("/(auth)/login");
     }
   };
 
@@ -273,6 +285,16 @@ const Onboarding = () => {
       fontFamily: theme.typography.button.fontFamily,
       letterSpacing: 0.5,
     },
+    uiContainer: {
+      position: "absolute",
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      justifyContent: "center",
+      alignItems: "center",
+      paddingHorizontal: theme.spacing.lg,
+    },
   } as const);
 
   return (
@@ -284,50 +306,58 @@ const Onboarding = () => {
       />
       {/* Background gradient effect */}
       <View style={styles.backgroundGlow} />
-      <FlatList
-        ref={flatListRef}
-        data={slides}
-        renderItem={renderItem}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onScroll={handleScroll}
-        keyExtractor={(item) => item.id}
-        scrollEventThrottle={16}
-      />
-      {/* Modern progress bar */}
-      <View style={styles.progressContainer}>
-        <Animated.View style={[styles.progressBar, { width: progressWidth }]} />
+
+      {/* FlatList Container */}
+      <View style={{ flex: 1 }}>
+        <FlatList
+          ref={flatListRef}
+          data={slides}
+          renderItem={renderItem}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onScroll={handleScroll}
+          keyExtractor={(item) => item.id}
+          scrollEventThrottle={16}
+          style={{ flex: 1 }}
+          contentContainerStyle={{ flexGrow: 1 }}
+        />
       </View>
-      {/* Dot indicators */}
-      <View style={styles.indicatorContainer}>
-        {slides.map((_, index) => (
-          <View
-            key={index}
-            style={[
-              styles.indicator,
-              index === currentIndex && styles.activeIndicator,
-            ]}
+
+      {/* UI Elements */}
+      <View style={styles.uiContainer} pointerEvents="box-none">
+        {/* Modern progress bar */}
+        <View style={styles.progressContainer}>
+          <Animated.View
+            style={[styles.progressBar, { width: progressWidth }]}
           />
-        ))}
+        </View>
+
+        {/* Dot indicators */}
+        <View style={styles.indicatorContainer}>
+          {slides.map((_, index) => (
+            <View
+              key={index}
+              style={[
+                styles.indicator,
+                index === currentIndex && styles.activeIndicator,
+              ]}
+            />
+          ))}
+        </View>
+
+        {/* Get Started Button */}
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity
+            style={styles.button}
+            onPress={handleGetStarted}
+            activeOpacity={0.8}
+            testID="get-started-button"
+          >
+            <Text style={styles.buttonText}>Get Started</Text>
+          </TouchableOpacity>
+        </View>
       </View>
-      <Animated.View
-        style={[
-          styles.buttonContainer,
-          {
-            opacity: buttonOpacityAnim,
-            transform: [{ scale: 1 }],
-          },
-        ]}
-      >
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleGetStarted}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.buttonText}>Get Started</Text>
-        </TouchableOpacity>
-      </Animated.View>
     </View>
   );
 };

@@ -1,286 +1,438 @@
-import Icon from '@/components/ui/Icon';
-import { Colors } from '@/constants/Colors';
-import { useLanguage } from '@/contexts/LanguageContext';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import { useRouter } from 'expo-router';
-import { StatusBar } from 'expo-status-bar';
-import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuthStore } from '../../utils/authStore';
+import Icon from "@/components/ui/Icon";
+import { useTheme } from "@/hooks/useThemeColor";
+import { useRouter } from "expo-router";
+import { StatusBar } from "expo-status-bar";
+import React, { useMemo } from "react";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-type IconSet = "feather" | "material" | "fontawesome" | "ionicons";
+interface MenuItem {
+  id: string;
+  title: string;
+  subtitle?: string;
+  icon: string;
+  iconSet: "feather" | "ionicons" | "material";
+  onPress: () => void;
+  showChevron?: boolean;
+  isDestructive?: boolean;
+}
 
-export default function Profile() {
+export default function ProfileScreen() {
   const router = useRouter();
-  const user = useAuthStore((state) => state.user);
-  const logout = useAuthStore((state) => state.logout);
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? 'light'];
-  const { t, currentLanguage } = useLanguage();
+  const theme = useTheme();
 
-  const handleLogout = () => {
-    logout();
-    router.replace('/(auth)/login');
-  };
+  const dynamicStyles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          flex: 1,
+          backgroundColor: theme.colors.background,
+        },
+        header: {
+          alignItems: "center",
+          paddingVertical: theme.spacing.xl,
+        },
+        profileCard: {
+          margin: theme.spacing.md,
+          backgroundColor: theme.colors.cardBackground,
+          borderRadius: theme.borderRadius.md,
+          padding: theme.spacing.lg,
+          alignItems: "center",
+          ...theme.shadows.medium,
+        },
+        avatar: {
+          width: 80,
+          height: 80,
+          borderRadius: theme.borderRadius.full,
+          backgroundColor: theme.colors.primary,
+          alignItems: "center",
+          justifyContent: "center",
+          marginBottom: theme.spacing.md,
+        },
+        avatarText: {
+          fontSize: theme.typography.h1.fontSize,
+          fontWeight: theme.typography.h1.fontWeight,
+          fontFamily: theme.typography.h1.fontFamily,
+          color: theme.colors.textInverse,
+        },
+        name: {
+          fontSize: theme.typography.h2.fontSize,
+          fontWeight: theme.typography.h2.fontWeight,
+          fontFamily: theme.typography.h2.fontFamily,
+          color: theme.colors.text,
+          marginBottom: theme.spacing.xs,
+        },
+        email: {
+          fontSize: theme.typography.body1.fontSize,
+          fontFamily: theme.typography.body1.fontFamily,
+          color: theme.colors.textSecondary,
+          marginBottom: theme.spacing.md,
+        },
+        editButton: {
+          backgroundColor: theme.colors.primary,
+          paddingHorizontal: theme.spacing.lg,
+          paddingVertical: theme.spacing.sm,
+          borderRadius: theme.borderRadius.sm,
+        },
+        editButtonText: {
+          color: theme.colors.textInverse,
+          fontSize: theme.typography.button.fontSize,
+          fontWeight: theme.typography.button.fontWeight,
+          fontFamily: theme.typography.button.fontFamily,
+        },
+        section: {
+          marginTop: theme.spacing.lg,
+        },
+        sectionHeader: {
+          paddingHorizontal: theme.spacing.md,
+          paddingVertical: theme.spacing.sm,
+          backgroundColor: theme.colors.surface,
+        },
+        sectionTitle: {
+          fontSize: theme.typography.subHeading.fontSize,
+          fontWeight: theme.typography.subHeading.fontWeight,
+          fontFamily: theme.typography.subHeading.fontFamily,
+          color: theme.colors.textSecondary,
+        },
+        menuCard: {
+          backgroundColor: theme.colors.cardBackground,
+          marginHorizontal: theme.spacing.md,
+          borderRadius: theme.borderRadius.md,
+          ...theme.shadows.small,
+        },
+        menuItem: {
+          flexDirection: "row",
+          alignItems: "center",
+          paddingHorizontal: theme.spacing.md,
+          paddingVertical: theme.spacing.lg,
+          borderBottomWidth: 1,
+          borderBottomColor: theme.colors.border,
+        },
+        lastMenuItem: {
+          borderBottomWidth: 0,
+        },
+        menuIcon: {
+          width: 40,
+          height: 40,
+          borderRadius: theme.borderRadius.sm,
+          backgroundColor: theme.colors.surface,
+          alignItems: "center",
+          justifyContent: "center",
+          marginRight: theme.spacing.md,
+        },
+        menuContent: {
+          flex: 1,
+        },
+        menuTitle: {
+          fontSize: theme.typography.body1.fontSize,
+          fontWeight: theme.typography.body1.fontWeight,
+          fontFamily: theme.typography.body1.fontFamily,
+          color: theme.colors.text,
+          marginBottom: theme.spacing.xs,
+        },
+        menuSubtitle: {
+          fontSize: theme.typography.body2.fontSize,
+          fontFamily: theme.typography.body2.fontFamily,
+          color: theme.colors.textSecondary,
+        },
+        destructiveTitle: {
+          color: theme.colors.error,
+        },
+        chevron: {
+          marginLeft: theme.spacing.sm,
+        },
+        statsContainer: {
+          flexDirection: "row",
+          justifyContent: "space-around",
+          paddingVertical: theme.spacing.md,
+        },
+        statItem: {
+          alignItems: "center",
+        },
+        statValue: {
+          fontSize: theme.typography.h3.fontSize,
+          fontWeight: theme.typography.h3.fontWeight,
+          fontFamily: theme.typography.h3.fontFamily,
+          color: theme.colors.text,
+          marginBottom: theme.spacing.xs,
+        },
+        statLabel: {
+          fontSize: theme.typography.body2.fontSize,
+          fontFamily: theme.typography.body2.fontFamily,
+          color: theme.colors.textSecondary,
+        },
+        badge: {
+          backgroundColor: theme.colors.primaryLight,
+          paddingHorizontal: theme.spacing.sm,
+          paddingVertical: theme.spacing.xs,
+          borderRadius: theme.borderRadius.xs,
+          marginLeft: theme.spacing.sm,
+        },
+        badgeText: {
+          fontSize: theme.typography.caption.fontSize,
+          fontWeight: theme.typography.caption.fontWeight,
+          fontFamily: theme.typography.caption.fontFamily,
+          color: theme.colors.primary,
+        },
+        versionText: {
+          fontSize: theme.typography.body2.fontSize,
+          fontFamily: theme.typography.body2.fontFamily,
+          color: theme.colors.textMuted,
+          textAlign: "center",
+          paddingVertical: theme.spacing.lg,
+        },
+      }),
+    [theme]
+  );
 
-  const handleLanguagePress = () => {
-    router.push('/(tabs)/language-selection');
-  };
+  const accountMenuItems: MenuItem[] = [
+    {
+      id: "personal-info",
+      title: "Personal Information",
+      subtitle: "Manage your account details",
+      icon: "user",
+      iconSet: "feather",
+      onPress: () => console.log("Personal Info"),
+      showChevron: true,
+    },
+    {
+      id: "security",
+      title: "Security & Privacy",
+      subtitle: "Password, 2FA, and privacy settings",
+      icon: "shield",
+      iconSet: "feather",
+      onPress: () => console.log("Security"),
+      showChevron: true,
+    },
+    {
+      id: "notifications",
+      title: "Notifications",
+      subtitle: "Push notifications and email alerts",
+      icon: "bell",
+      iconSet: "feather",
+      onPress: () => console.log("Notifications"),
+      showChevron: true,
+    },
+    {
+      id: "language",
+      title: "Language & Region",
+      subtitle: "English (US)",
+      icon: "globe",
+      iconSet: "feather",
+      onPress: () => router.push("/(tabs)/language-selection"),
+      showChevron: true,
+    },
+  ];
 
-  const renderMenuItem = (iconName: string, iconSet: IconSet, titleKey: string, onPress?: () => void, showChevron = true) => (
-    <TouchableOpacity style={[styles.menuItem, { borderBottomColor: theme.border }]} onPress={onPress}>
-      <View style={styles.menuItemLeft}>
-        <View style={[styles.menuIconContainer, { backgroundColor: theme.primary + '20' }]}>
-          <Icon name={iconName} set={iconSet} size={20} color={theme.primary} />
-        </View>
-        <Text style={[styles.menuText, { color: theme.text }]}>{t(titleKey)}</Text>
+  const tradingMenuItems: MenuItem[] = [
+    {
+      id: "trading-preferences",
+      title: "Trading Preferences",
+      subtitle: "Default settings and risk management",
+      icon: "trending-up",
+      iconSet: "feather",
+      onPress: () => console.log("Trading Preferences"),
+      showChevron: true,
+    },
+    {
+      id: "portfolio",
+      title: "Portfolio Settings",
+      subtitle: "View and manage your investments",
+      icon: "pie-chart",
+      iconSet: "feather",
+      onPress: () => router.push("/(tabs)/portfolio"),
+      showChevron: true,
+    },
+    {
+      id: "payment-methods",
+      title: "Payment Methods",
+      subtitle: "Manage cards and bank accounts",
+      icon: "credit-card",
+      iconSet: "feather",
+      onPress: () => console.log("Payment Methods"),
+      showChevron: true,
+    },
+  ];
+
+  const supportMenuItems: MenuItem[] = [
+    {
+      id: "help-center",
+      title: "Help Center",
+      subtitle: "FAQs and support articles",
+      icon: "help-circle",
+      iconSet: "feather",
+      onPress: () => router.push("/(tabs)/support"),
+      showChevron: true,
+    },
+    {
+      id: "contact-support",
+      title: "Contact Support",
+      subtitle: "Get help from our team",
+      icon: "message-circle",
+      iconSet: "feather",
+      onPress: () => console.log("Contact Support"),
+      showChevron: true,
+    },
+    {
+      id: "feedback",
+      title: "Send Feedback",
+      subtitle: "Help us improve the app",
+      icon: "star",
+      iconSet: "feather",
+      onPress: () => console.log("Feedback"),
+      showChevron: true,
+    },
+  ];
+
+  const otherMenuItems: MenuItem[] = [
+    {
+      id: "about",
+      title: "About TradeX",
+      subtitle: "Version 1.0.0",
+      icon: "info",
+      iconSet: "feather",
+      onPress: () => console.log("About"),
+      showChevron: true,
+    },
+    {
+      id: "terms",
+      title: "Terms & Conditions",
+      icon: "file-text",
+      iconSet: "feather",
+      onPress: () => console.log("Terms"),
+      showChevron: true,
+    },
+    {
+      id: "privacy",
+      title: "Privacy Policy",
+      icon: "lock",
+      iconSet: "feather",
+      onPress: () => console.log("Privacy"),
+      showChevron: true,
+    },
+    {
+      id: "logout",
+      title: "Sign Out",
+      icon: "log-out",
+      iconSet: "feather",
+      onPress: () => console.log("Logout"),
+      isDestructive: true,
+    },
+  ];
+
+  const renderMenuItem = (item: MenuItem, isLast: boolean = false) => (
+    <TouchableOpacity
+      key={item.id}
+      style={[dynamicStyles.menuItem, isLast && dynamicStyles.lastMenuItem]}
+      onPress={item.onPress}
+      activeOpacity={0.7}
+    >
+      <View style={dynamicStyles.menuIcon}>
+        <Icon
+          name={item.icon}
+          set={item.iconSet}
+          size={20}
+          color={item.isDestructive ? theme.colors.error : theme.colors.text}
+        />
       </View>
-      {showChevron && (
-        <Icon name="chevron-right" set="feather" size={20} color={theme.textSecondary} />
+      <View style={dynamicStyles.menuContent}>
+        <Text
+          style={[
+            dynamicStyles.menuTitle,
+            item.isDestructive && dynamicStyles.destructiveTitle,
+          ]}
+        >
+          {item.title}
+        </Text>
+        {item.subtitle && (
+          <Text style={dynamicStyles.menuSubtitle}>{item.subtitle}</Text>
+        )}
+      </View>
+      {item.showChevron && (
+        <Icon
+          name="chevron-right"
+          set="feather"
+          size={20}
+          color={theme.colors.textSecondary}
+        />
       )}
     </TouchableOpacity>
   );
 
-  const renderSocialIcon = (iconName: string, iconSet: IconSet) => (
-    <TouchableOpacity style={[styles.socialIcon, { backgroundColor: theme.surface }]}>
-      <Icon name={iconName} set={iconSet} size={20} color={theme.textSecondary} />
-    </TouchableOpacity>
+  const renderMenuSection = (title: string, items: MenuItem[]) => (
+    <View style={dynamicStyles.section}>
+      <View style={dynamicStyles.sectionHeader}>
+        <Text style={dynamicStyles.sectionTitle}>{title.toUpperCase()}</Text>
+      </View>
+      <View style={dynamicStyles.menuCard}>
+        {items.map((item, index) =>
+          renderMenuItem(item, index === items.length - 1)
+        )}
+      </View>
+    </View>
   );
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={[styles.headerTitle, { color: theme.text }]}>{t('profile', 'Profile')}</Text>
-      </View>
-      
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+    <SafeAreaView style={dynamicStyles.container}>
+      <StatusBar
+        style={theme.isLight ? "dark" : "light"}
+        backgroundColor={theme.colors.background}
+      />
+
+      <ScrollView showsVerticalScrollIndicator={false}>
         {/* Profile Card */}
-        <View style={[styles.profileCard, { backgroundColor: theme.surface }]}>
-          <View style={styles.profileHeader}>
-            <View style={styles.avatarContainer}>
-              <View style={[styles.avatar, { backgroundColor: theme.primary }]}>
-                <Text style={styles.avatarText}>
-                  {user?.phoneNumber ? user.phoneNumber.substring(0, 2) : 'BS'}
-                </Text>
-              </View>
-            </View>
-            
-            <View style={styles.profileInfo}>
-              <Text style={[styles.profileName, { color: theme.text }]}>Baba Sehgal</Text>
-              <Text style={[styles.profilePhone, { color: theme.textSecondary }]}>
-                +91 {user?.phoneNumber || '4816543211'}
-              </Text>
-              <Text style={[styles.profileBalance, { color: theme.textSecondary }]}>
-                Bal - ₹222
-              </Text>
-            </View>
-            
-            <TouchableOpacity style={[styles.manageButton, { backgroundColor: theme.primary }]}>
-              <Text style={styles.manageButtonText}>Manage</Text>
-            </TouchableOpacity>
+        <View style={dynamicStyles.profileCard}>
+          <View style={dynamicStyles.avatar}>
+            <Text style={dynamicStyles.avatarText}>JD</Text>
           </View>
-        </View>
+          <Text style={dynamicStyles.name}>John Doe</Text>
+          <Text style={dynamicStyles.email}>john.doe@example.com</Text>
 
-        {/* Account Section */}
-        <View style={[styles.menuSection, { backgroundColor: theme.surface }]}>
-          {renderMenuItem('credit-card', 'feather', 'add_fund')}
-          {renderMenuItem('globe', 'feather', 'language', handleLanguagePress)}
-          {renderMenuItem('settings', 'feather', 'settings')}
-          {renderMenuItem('finger-print', 'ionicons', 'biometric_passcode')}
-          {renderMenuItem('book-open', 'feather', 'learning_material')}
-        </View>
-
-        {/* Rewards Section */}
-        <View style={[styles.menuSection, { backgroundColor: theme.surface }]}>
-          {renderMenuItem('gift', 'feather', 'rewards')}
-          {renderMenuItem('users', 'feather', 'invites_earn')}
-          {renderMenuItem('star', 'feather', 'rate_app')}
-        </View>
-
-        {/* Legal Section */}
-        <View style={[styles.menuSection, { backgroundColor: theme.surface }]}>
-          {renderMenuItem('shield', 'feather', 'privacy_policy')}
-          {renderMenuItem('file-text', 'feather', 'terms_conditions')}
-          {renderMenuItem('log-out', 'feather', 'log_out', handleLogout)}
-        </View>
-
-        {/* Language Info */}
-        <View style={[styles.languageInfo, { backgroundColor: theme.surface }]}>
-          <View style={styles.languageInfoContent}>
-            <Text style={[styles.languageInfoLabel, { color: theme.textSecondary }]}>
-              {t('current_language', 'Current Language')}
-            </Text>
-            <View style={styles.currentLanguageDisplay}>
-              <Text style={styles.languageFlag}>{currentLanguage.flag}</Text>
-              <Text style={[styles.languageName, { color: theme.text }]}>
-                {currentLanguage.nativeName}
+          {/* Quick Stats */}
+          <View style={dynamicStyles.statsContainer}>
+            <View style={dynamicStyles.statItem}>
+              <Text style={dynamicStyles.statValue}>12</Text>
+              <Text style={dynamicStyles.statLabel}>Active Trades</Text>
+            </View>
+            <View style={dynamicStyles.statItem}>
+              <Text style={dynamicStyles.statValue}>₹5,240</Text>
+              <Text style={dynamicStyles.statLabel}>Portfolio Value</Text>
+            </View>
+            <View style={dynamicStyles.statItem}>
+              <Text
+                style={[
+                  dynamicStyles.statValue,
+                  { color: theme.colors.success },
+                ]}
+              >
+                +12.5%
               </Text>
+              <Text style={dynamicStyles.statLabel}>Returns</Text>
             </View>
           </View>
+
+          <TouchableOpacity style={dynamicStyles.editButton}>
+            <Text style={dynamicStyles.editButtonText}>Edit Profile</Text>
+          </TouchableOpacity>
         </View>
 
-        {/* App Info & Social Links */}
-        <View style={styles.footerSection}>
-          <Text style={[styles.appVersion, { color: theme.textSecondary }]}>
-            {t('app_version', 'App version')} 1.2.3
-          </Text>
-          
-          <View style={styles.socialContainer}>
-            {renderSocialIcon('send', 'feather')}
-            {renderSocialIcon('twitter', 'feather')}
-            {renderSocialIcon('message-circle', 'feather')}
-            {renderSocialIcon('instagram', 'feather')}
-          </View>
-        </View>
+        {/* Menu Sections */}
+        {renderMenuSection("Account", accountMenuItems)}
+        {renderMenuSection("Trading", tradingMenuItems)}
+        {renderMenuSection("Support", supportMenuItems)}
+        {renderMenuSection("Other", otherMenuItems)}
+
+        {/* Version */}
+        <Text style={dynamicStyles.versionText}>
+          TradeX v1.0.0 • Build 2024.1
+        </Text>
       </ScrollView>
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    paddingTop: 20,
-    paddingBottom: 16,
-    paddingHorizontal: 16,
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: 'bold',
-  },
-  content: {
-    flex: 1,
-  },
-  profileCard: {
-    margin: 16,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 12,
-  },
-  profileHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  avatarContainer: {
-    marginRight: 16,
-  },
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  avatarText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#FFFFFF',
-  },
-  profileInfo: {
-    flex: 1,
-  },
-  profileName: {
-    fontSize: 18,
-    fontWeight: '600',
-    marginBottom: 4,
-  },
-  profilePhone: {
-    fontSize: 14,
-    marginBottom: 2,
-  },
-  profileBalance: {
-    fontSize: 14,
-  },
-  manageButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  manageButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  menuSection: {
-    marginHorizontal: 16,
-    marginBottom: 12,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-  },
-  menuItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  menuIconContainer: {
-    width: 36,
-    height: 36,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  menuText: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  languageInfo: {
-    marginHorizontal: 16,
-    marginBottom: 12,
-    borderRadius: 12,
-    padding: 16,
-  },
-  languageInfoContent: {
-    alignItems: 'center',
-  },
-  languageInfoLabel: {
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  currentLanguageDisplay: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  languageFlag: {
-    fontSize: 20,
-  },
-  languageName: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  footerSection: {
-    alignItems: 'center',
-    paddingVertical: 24,
-    paddingHorizontal: 16,
-  },
-  appVersion: {
-    fontSize: 14,
-    marginBottom: 16,
-  },
-  socialContainer: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  socialIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-}); 

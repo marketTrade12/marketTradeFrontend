@@ -1,219 +1,216 @@
-import Icon from '@/components/ui/Icon';
-import { Colors } from '@/constants/Colors';
-import { MarketDetail } from '@/constants/marketDetails';
-import { useColorScheme } from '@/hooks/useColorScheme';
-import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { useTheme } from "@/hooks/useThemeColor";
+import React, { useMemo } from "react";
+import { StyleSheet, Text, View } from "react-native";
 
 interface MarketDetailStatsProps {
-  marketDetail: MarketDetail;
-  timeRemaining: string;
+  volume: number;
+  participants: number;
+  liquidity: number;
+  status: "active" | "closed" | "resolved";
+  createdDate: string;
+  resolutionDate?: string;
+  totalShares?: number;
+  avgPrice?: number;
 }
 
-export default function MarketDetailStats({ marketDetail, timeRemaining }: MarketDetailStatsProps) {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? 'light'];
-
-  const formatVolume = (volume: string): string => {
-    // Extract number from volume string and format
-    const match = volume.match(/[\d.,]+/);
-    if (match) {
-      const num = parseFloat(match[0].replace(/,/g, ''));
-      if (num >= 1000000) {
-        return `$${(num / 1000000).toFixed(1)}M`;
-      } else if (num >= 1000) {
-        return `$${(num / 1000).toFixed(0)}K`;
-      }
-    }
-    return volume;
-  };
+export default function MarketDetailStats({
+  volume,
+  participants,
+  liquidity,
+  status,
+  createdDate,
+  resolutionDate,
+  totalShares,
+  avgPrice,
+}: MarketDetailStatsProps) {
+  const theme = useTheme();
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'active': return '#22C55E';
-      case 'closed': return '#6B7280';
-      case 'resolved': return '#3B82F6';
-      default: return theme.textSecondary;
+      case "active":
+        return theme.colors.success;
+      case "closed":
+        return theme.colors.textSecondary;
+      case "resolved":
+        return theme.colors.info;
+      default:
+        return theme.colors.textSecondary;
     }
   };
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'active': return 'Active';
-      case 'closed': return 'Closed';
-      case 'resolved': return 'Resolved';
-      default: return 'Unknown';
+  const formatDate = (dateString: string) => {
+    try {
+      return new Date(dateString).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+    } catch {
+      return "N/A";
     }
   };
+
+  const dynamicStyles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          backgroundColor: theme.colors.cardBackground,
+          margin: theme.spacing.md,
+          borderRadius: theme.borderRadius.md,
+          padding: theme.spacing.lg,
+          ...theme.shadows.medium,
+        },
+        header: {
+          flexDirection: "row",
+          alignItems: "center",
+          marginBottom: theme.spacing.md,
+          gap: theme.spacing.sm,
+        },
+        headerIcon: {
+          width: 8,
+          height: 8,
+          borderRadius: theme.borderRadius.xs,
+          backgroundColor: getStatusColor(status),
+        },
+        headerTitle: {
+          fontSize: theme.typography.body1.fontSize,
+          fontWeight: theme.typography.body1.fontWeight,
+          fontFamily: theme.typography.body1.fontFamily,
+          color: theme.colors.text,
+        },
+        headerStatus: {
+          fontSize: theme.typography.body2.fontSize,
+          fontFamily: theme.typography.body2.fontFamily,
+          color: getStatusColor(status),
+          textTransform: "uppercase",
+        },
+        statsGrid: {
+          gap: theme.spacing.lg,
+        },
+        statRow: {
+          flexDirection: "row",
+          justifyContent: "space-between",
+          gap: theme.spacing.md,
+        },
+        statItem: {
+          flex: 1,
+          backgroundColor: theme.colors.surface,
+          borderRadius: theme.borderRadius.sm,
+          padding: theme.spacing.md,
+        },
+        statLabel: {
+          fontSize: theme.typography.body2.fontSize,
+          fontFamily: theme.typography.body2.fontFamily,
+          color: theme.colors.textSecondary,
+          marginBottom: theme.spacing.xs,
+        },
+        statValue: {
+          fontSize: theme.typography.body1.fontSize,
+          fontWeight: theme.typography.body1.fontWeight,
+          fontFamily: theme.typography.body1.fontFamily,
+          color: theme.colors.text,
+        },
+        dateSection: {
+          marginTop: theme.spacing.lg,
+          paddingTop: theme.spacing.lg,
+          borderTopWidth: 1,
+          borderTopColor: theme.colors.border,
+        },
+        dateRow: {
+          flexDirection: "row",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: theme.spacing.sm,
+        },
+        dateLabel: {
+          fontSize: theme.typography.body2.fontSize,
+          fontFamily: theme.typography.body2.fontFamily,
+          color: theme.colors.textSecondary,
+        },
+        dateValue: {
+          fontSize: theme.typography.body2.fontSize,
+          fontWeight: theme.typography.body2.fontWeight,
+          fontFamily: theme.typography.body2.fontFamily,
+          color: theme.colors.text,
+        },
+      }),
+    [theme, status]
+  );
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.surface }]}>
-      {/* Market Status and Time */}
-      <View style={styles.topRow}>
-        <View style={styles.statusContainer}>
-          <View style={[styles.statusDot, { backgroundColor: getStatusColor('active') }]} />
-          <Text style={[styles.statusText, { color: theme.text }]}>
-            {getStatusText('active')}
-          </Text>
-        </View>
-        <Text style={[styles.timeRemaining, { color: theme.textSecondary }]}>
-          {timeRemaining} remaining
-        </Text>
+    <View style={dynamicStyles.container}>
+      {/* Header */}
+      <View style={dynamicStyles.header}>
+        <View style={dynamicStyles.headerIcon} />
+        <Text style={dynamicStyles.headerTitle}>Market Statistics</Text>
+        <Text style={dynamicStyles.headerStatus}>{status}</Text>
       </View>
 
-      {/* Market Stats Grid */}
-      <View style={styles.statsGrid}>
-        <View style={styles.statItem}>
-          <View style={styles.statHeader}>
-            <Icon name="bar-chart-2" set="feather" size={14} color={theme.textSecondary} />
-            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>
-              Volume
+      {/* Stats Grid */}
+      <View style={dynamicStyles.statsGrid}>
+        <View style={dynamicStyles.statRow}>
+          <View style={dynamicStyles.statItem}>
+            <Text style={dynamicStyles.statLabel}>Volume</Text>
+            <Text style={dynamicStyles.statValue}>
+              ₹{volume.toLocaleString()}
             </Text>
           </View>
-          <Text style={[styles.statValue, { color: theme.text }]}>
-            {formatVolume(marketDetail.totalVolume)}
-          </Text>
-        </View>
-
-        <View style={styles.statItem}>
-          <View style={styles.statHeader}>
-            <Icon name="users" set="feather" size={14} color={theme.textSecondary} />
-            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>
-              Outcomes
+          <View style={dynamicStyles.statItem}>
+            <Text style={dynamicStyles.statLabel}>Traders</Text>
+            <Text style={dynamicStyles.statValue}>
+              {participants.toLocaleString()}
             </Text>
           </View>
-          <Text style={[styles.statValue, { color: theme.text }]}>
-            {marketDetail.outcomes.length}
-          </Text>
         </View>
 
-        <View style={styles.statItem}>
-          <View style={styles.statHeader}>
-            <Icon name="calendar" set="feather" size={14} color={theme.textSecondary} />
-            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>
-              Ends
+        <View style={dynamicStyles.statRow}>
+          <View style={dynamicStyles.statItem}>
+            <Text style={dynamicStyles.statLabel}>Liquidity</Text>
+            <Text style={dynamicStyles.statValue}>
+              ₹{liquidity.toLocaleString()}
             </Text>
           </View>
-          <Text style={[styles.statValue, { color: theme.text }]}>
-            {new Date(marketDetail.endDate).toLocaleDateString('en-US', { 
-              month: 'short', 
-              day: 'numeric' 
-            })}
-          </Text>
-        </View>
-
-        <View style={styles.statItem}>
-          <View style={styles.statHeader}>
-            <Icon name="shield" set="feather" size={14} color={theme.textSecondary} />
-            <Text style={[styles.statLabel, { color: theme.textSecondary }]}>
-              Resolver
+          <View style={dynamicStyles.statItem}>
+            <Text style={dynamicStyles.statLabel}>Total Shares</Text>
+            <Text style={dynamicStyles.statValue}>
+              {totalShares ? totalShares.toLocaleString() : "N/A"}
             </Text>
           </View>
-          <Text style={[styles.statValue, { color: theme.primary }]} numberOfLines={1}>
-            {marketDetail.resolver.name}
-          </Text>
         </View>
-      </View>
 
-      {/* Tags */}
-      {marketDetail.tags && marketDetail.tags.length > 0 && (
-        <View style={styles.tagsContainer}>
-          {marketDetail.tags.slice(0, 3).map((tag, index) => (
-            <View key={index} style={[styles.tag, { backgroundColor: theme.primary + '15' }]}>
-              <Text style={[styles.tagText, { color: theme.primary }]}>
-                #{tag}
+        {avgPrice && (
+          <View style={dynamicStyles.statRow}>
+            <View style={dynamicStyles.statItem}>
+              <Text style={dynamicStyles.statLabel}>Avg Price</Text>
+              <Text style={dynamicStyles.statValue}>
+                ₹{avgPrice.toFixed(2)}
               </Text>
             </View>
-          ))}
-          {marketDetail.tags.length > 3 && (
-            <Text style={[styles.moreText, { color: theme.textSecondary }]}>
-              +{marketDetail.tags.length - 3} more
-            </Text>
-          )}
+            <View style={dynamicStyles.statItem}>
+              {/* Empty slot for balance */}
+            </View>
+          </View>
+        )}
+      </View>
+
+      {/* Date Information */}
+      <View style={dynamicStyles.dateSection}>
+        <View style={dynamicStyles.dateRow}>
+          <Text style={dynamicStyles.dateLabel}>Created</Text>
+          <Text style={dynamicStyles.dateValue}>{formatDate(createdDate)}</Text>
         </View>
-      )}
+
+        {resolutionDate && (
+          <View style={dynamicStyles.dateRow}>
+            <Text style={dynamicStyles.dateLabel}>
+              {status === "resolved" ? "Resolved" : "Resolution Date"}
+            </Text>
+            <Text style={dynamicStyles.dateValue}>
+              {formatDate(resolutionDate)}
+            </Text>
+          </View>
+        )}
+      </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    margin: 16,
-    padding: 20,
-    borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  topRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  statusContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  statusText: {
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  timeRemaining: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  statItem: {
-    width: '48%',
-    marginBottom: 16,
-  },
-  statHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 4,
-  },
-  statLabel: {
-    fontSize: 12,
-    fontWeight: '500',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  statValue: {
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  tagsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    alignItems: 'center',
-  },
-  tag: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  tagText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  moreText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-}); 

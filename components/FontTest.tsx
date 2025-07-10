@@ -1,37 +1,32 @@
 import { useTheme } from "@/hooks/useThemeColor";
 import React from "react";
-import { StyleSheet, View } from "react-native";
+import { View } from "react-native";
 import { ThemedText } from "./ThemedText";
 
-export function FontTest() {
+export default function FontTest() {
   const theme = useTheme();
 
   return (
-    <View
-      style={[styles.container, { backgroundColor: theme.colors.background }]}
-    >
-      <ThemedText type="heading" style={{ marginBottom: theme.spacing.md }}>
-        Inter Heading (SemiBold)
+    <View style={{ padding: theme.spacing.md }}>
+      <ThemedText type="title" style={{ marginBottom: theme.spacing.md }}>
+        Inter H1 (Bold)
       </ThemedText>
-      <ThemedText type="subHeading" style={{ marginBottom: theme.spacing.sm }}>
-        Inter Sub-Heading (Medium)
+      <ThemedText
+        type="defaultSemiBold"
+        style={{ marginBottom: theme.spacing.sm }}
+      >
+        Inter Sub-Heading (SemiBold)
       </ThemedText>
-      <ThemedText type="body1" style={{ marginBottom: theme.spacing.sm }}>
-        Inter Body Text (Regular) - This is regular body text using Inter font.
+      <ThemedText type="default" style={{ marginBottom: theme.spacing.sm }}>
+        Inter Body1 (Regular)
       </ThemedText>
-      <ThemedText type="body2" style={{ marginBottom: theme.spacing.sm }}>
-        Inter Body 2 (Regular) - Smaller body text.
+      <ThemedText type="subtitle" style={{ marginBottom: theme.spacing.sm }}>
+        Inter Body2 (Regular)
       </ThemedText>
-      <ThemedText type="caption" style={{ marginBottom: theme.spacing.md }}>
-        Inter Caption (Regular) - Small caption text.
+      <ThemedText type="link" style={{ marginBottom: theme.spacing.md }}>
+        Inter Caption (Regular)
       </ThemedText>
-      <ThemedText type="button">Inter Button Text (Medium)</ThemedText>
+      <ThemedText type="defaultSemiBold">Inter Button Text (Medium)</ThemedText>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    padding: 20,
-  },
-});

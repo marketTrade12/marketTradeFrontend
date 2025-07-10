@@ -1,9 +1,7 @@
 import Icon from "@/components/ui/Icon";
-import { Colors } from "@/constants/Colors";
 import { MarketItem, TradeAction } from "@/constants/types";
 import { useBookmarks } from "@/hooks/useBookmarks";
-import { useColorScheme } from "@/hooks/useColorScheme";
-import { LinearGradient } from "expo-linear-gradient";
+import { useTheme } from "@/hooks/useThemeColor";
 import { useRouter } from "expo-router";
 import React from "react";
 import {
@@ -18,13 +16,12 @@ import {
 
 type Props = {
   item: MarketItem;
-  onVote?: (meta: TradeAction) => void;
+  onVote?: (action: TradeAction) => void;
   hideVoting?: boolean;
 };
 
 export default function MarketCard({ item, onVote, hideVoting }: Props) {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme ?? "light"];
+  const theme = useTheme();
   const { isBookmarked, toggleBookmark } = useBookmarks();
   const router = useRouter();
 
@@ -61,6 +58,141 @@ export default function MarketCard({ item, onVote, hideVoting }: Props) {
     }
   };
 
+  const styles = StyleSheet.create({
+    wrapper: {
+      marginHorizontal: theme.spacing.md,
+      marginVertical: theme.spacing.sm,
+    },
+    card: {
+      backgroundColor: theme.colors.cardBackground,
+      borderRadius: theme.borderRadius.lg,
+      borderWidth: 1,
+      borderColor: theme.colors.border,
+      overflow: "hidden",
+      ...theme.shadows.small,
+    },
+    cardContent: {
+      padding: theme.spacing.lg,
+      position: "relative",
+    },
+    thumbnail: {
+      position: "absolute",
+      top: theme.spacing.lg,
+      right: theme.spacing.lg,
+      width: 48,
+      height: 48,
+      borderRadius: theme.borderRadius.sm,
+    },
+    title: {
+      fontSize: theme.typography.subHeading.fontSize,
+      fontFamily: theme.typography.subHeading.fontFamily,
+      fontWeight: theme.typography.subHeading.fontWeight,
+      lineHeight: 22,
+      marginRight: 64,
+      color: theme.colors.text,
+    },
+    subText: {
+      fontSize: theme.typography.body2.fontSize,
+      fontFamily: theme.typography.body2.fontFamily,
+      color: theme.colors.textSecondary,
+      marginTop: theme.spacing.xs,
+      marginBottom: theme.spacing.md,
+    },
+    binaryRow: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      marginBottom: theme.spacing.md,
+    },
+    binaryBtn: {
+      flex: 1,
+      paddingVertical: theme.spacing.sm,
+      alignItems: "center",
+      borderRadius: theme.borderRadius.md,
+      marginHorizontal: theme.spacing.xs,
+      backgroundColor: theme.colors.primaryLight,
+    },
+    binaryBtnText: {
+      fontSize: theme.typography.body1.fontSize,
+      fontFamily: theme.typography.body1.fontFamily,
+      fontWeight: "600",
+      color: theme.colors.primary,
+    },
+    multiContainer: {
+      marginBottom: theme.spacing.md,
+    },
+    multiRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      marginVertical: theme.spacing.xs,
+    },
+    multiLabel: {
+      flex: 1,
+      fontSize: theme.typography.body1.fontSize,
+      fontFamily: theme.typography.body1.fontFamily,
+      fontWeight: "500",
+      color: theme.colors.text,
+    },
+    multiRightGroup: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    multiPct: {
+      width: 40,
+      fontSize: theme.typography.body2.fontSize,
+      fontFamily: theme.typography.body2.fontFamily,
+      textAlign: "center",
+      color: theme.colors.textSecondary,
+    },
+    multiBtn: {
+      paddingVertical: theme.spacing.xs,
+      paddingHorizontal: theme.spacing.sm,
+      borderRadius: theme.borderRadius.md,
+      marginLeft: theme.spacing.sm,
+      backgroundColor: theme.colors.primaryLight,
+    },
+    multiBtnText: {
+      fontSize: theme.typography.body2.fontSize,
+      fontFamily: theme.typography.body2.fontFamily,
+      fontWeight: "600",
+      color: theme.colors.primary,
+    },
+    tradersRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      justifyContent: "space-between",
+    },
+    traderInfo: {
+      flexDirection: "row",
+      alignItems: "center",
+    },
+    traderDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      marginRight: theme.spacing.xs,
+      backgroundColor: theme.colors.success,
+    },
+    traderText: {
+      fontSize: theme.typography.body2.fontSize,
+      fontFamily: theme.typography.body2.fontFamily,
+      marginLeft: theme.spacing.xs,
+      color: theme.colors.textSecondary,
+    },
+    volume: {
+      fontSize: theme.typography.body2.fontSize,
+      fontFamily: theme.typography.body2.fontFamily,
+      color: theme.colors.textSecondary,
+    },
+    footerActions: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: theme.spacing.md,
+    },
+    actionIcon: {
+      marginLeft: theme.spacing.md,
+    },
+  });
+
   return (
     <Pressable
       onPress={() => router.push(`/market/${item.detailId}`)}
@@ -72,17 +204,15 @@ export default function MarketCard({ item, onVote, hideVoting }: Props) {
             <Image source={{ uri: item.imageUrl }} style={styles.thumbnail} />
           )}
 
-          <Text style={[styles.title, { color: theme.text }]}>
-            {item.title}
-          </Text>
-          <Text style={[styles.subText, { color: theme.textSecondary }]}>
+          <Text style={styles.title}>{item.title}</Text>
+          <Text style={styles.subText}>
             {item.category.toUpperCase()} • {formatTimeRemaining(item.endDate)}
           </Text>
 
           {!hideVoting && item.type === "binary" && (
             <View style={styles.binaryRow}>
               <TouchableOpacity
-                style={[styles.binaryBtn, { backgroundColor: "#EDEBFF" }]}
+                style={styles.binaryBtn}
                 onPress={() =>
                   onVote?.({
                     detailId: item.detailId,
@@ -90,28 +220,39 @@ export default function MarketCard({ item, onVote, hideVoting }: Props) {
                     actionType: "buy",
                     label: item.yesOption.label,
                     price: item.yesOption.price,
+                    priceDisplay: item.yesOption.priceDisplay,
                     marketType: "binary",
                   })
                 }
               >
-                <Text style={[styles.binaryBtnText, { color: "#7C3AED" }]}>
+                <Text style={styles.binaryBtnText}>
                   Yes ₹ {(item.yesOption.price * 10).toFixed(1)}
                 </Text>
               </TouchableOpacity>
+
               <TouchableOpacity
-                style={[styles.binaryBtn, { backgroundColor: "#ECFDF5" }]}
+                style={[
+                  styles.binaryBtn,
+                  { backgroundColor: theme.colors.secondaryLight },
+                ]}
                 onPress={() =>
                   onVote?.({
                     detailId: item.detailId,
                     optionId: item.noOption.id,
-                    actionType: "buy",
+                    actionType: "sell",
                     label: item.noOption.label,
                     price: item.noOption.price,
+                    priceDisplay: item.noOption.priceDisplay,
                     marketType: "binary",
                   })
                 }
               >
-                <Text style={[styles.binaryBtnText, { color: "#22C55E" }]}>
+                <Text
+                  style={[
+                    styles.binaryBtnText,
+                    { color: theme.colors.secondary },
+                  ]}
+                >
                   No ₹ {(item.noOption.price * 10).toFixed(1)}
                 </Text>
               </TouchableOpacity>
@@ -120,50 +261,26 @@ export default function MarketCard({ item, onVote, hideVoting }: Props) {
 
           {!hideVoting && item.type === "multi-outcome" && (
             <View style={styles.multiContainer}>
-              {item.options.map((opt) => (
+              {item.options.slice(0, 3).map((opt: any, idx: number) => (
                 <View key={opt.id} style={styles.multiRow}>
-                  <Text style={[styles.multiLabel, { color: theme.text }]}>
-                    {opt.label}
-                  </Text>
+                  <Text style={styles.multiLabel}>{opt.label}</Text>
                   <View style={styles.multiRightGroup}>
-                    <Text
-                      style={[styles.multiPct, { color: theme.textSecondary }]}
-                    >
-                      {multiPct(opt.price)}%
-                    </Text>
+                    <Text style={styles.multiPct}>{multiPct(opt.price)}%</Text>
                     <TouchableOpacity
-                      style={[styles.multiBtn, { backgroundColor: "#EDEBFF" }]}
+                      style={styles.multiBtn}
                       onPress={() =>
                         onVote?.({
                           detailId: item.detailId,
-                          optionId: opt.id,
                           actionType: "buy",
+                          optionId: opt.id,
                           label: opt.label,
                           price: opt.price,
+                          priceDisplay: opt.priceDisplay,
                           marketType: "multi-outcome",
                         })
                       }
                     >
-                      <Text style={[styles.multiBtnText, { color: "#7C3AED" }]}>
-                        Yes ₹ {(opt.price * 10).toFixed(1)}
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.multiBtn, { backgroundColor: "#ECFDF5" }]}
-                      onPress={() =>
-                        onVote?.({
-                          detailId: item.detailId,
-                          optionId: opt.id,
-                          actionType: "buy",
-                          label: opt.label,
-                          price: opt.price,
-                          marketType: "multi-outcome",
-                        })
-                      }
-                    >
-                      <Text style={[styles.multiBtnText, { color: "#22C55E" }]}>
-                        No ₹ {(10 - multiPct(opt.price)).toFixed(1)}
-                      </Text>
+                      <Text style={styles.multiBtnText}>Buy</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -172,213 +289,39 @@ export default function MarketCard({ item, onVote, hideVoting }: Props) {
           )}
 
           <View style={styles.tradersRow}>
-            {item.type === "binary" ? (
-              <>
-                <View style={styles.traderInfo}>
-                  <View
-                    style={[styles.traderDot, { backgroundColor: "#7C3AED" }]}
-                  />
-                  <Icon
-                    name="people"
-                    set="ionicons"
-                    size={14}
-                    color="#6B7280"
-                  />
-                  <Text
-                    style={[styles.traderText, { color: theme.textSecondary }]}
-                  >
-                    {" "}
-                    {yesPct}% traders
-                  </Text>
-                </View>
-                <View style={styles.traderInfo}>
-                  <View
-                    style={[styles.traderDot, { backgroundColor: "#22C55E" }]}
-                  />
-                  <Icon
-                    name="people"
-                    set="ionicons"
-                    size={14}
-                    color="#6B7280"
-                  />
-                  <Text
-                    style={[styles.traderText, { color: theme.textSecondary }]}
-                  >
-                    {" "}
-                    {noPct}% traders
-                  </Text>
-                </View>
-              </>
-            ) : (
-              <Text style={[styles.volume, { color: theme.textSecondary }]}>
-                Vol: {item.totalVolume}
-              </Text>
-            )}
+            <View style={styles.traderInfo}>
+              <View style={styles.traderDot} />
+              <Text style={styles.traderText}>{item.participants} traders</Text>
+            </View>
+            <Text style={styles.volume}>{item.totalVolume}</Text>
             <View style={styles.footerActions}>
-              <TouchableOpacity onPress={handleShare} style={styles.actionIcon}>
-                <Icon
-                  name="share"
-                  set="feather"
-                  size={20}
-                  color={theme.textSecondary}
-                />
-              </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => toggleBookmark(item)}
                 style={styles.actionIcon}
               >
                 <Icon
-                  name={isBookmarked(item.id) ? "bookmark" : "bookmark-outline"}
-                  set="material"
-                  size={20}
-                  color={theme.textSecondary}
+                  name={isBookmarked(item.id) ? "bookmark" : "bookmark-o"}
+                  set="fontawesome"
+                  size={16}
+                  color={
+                    isBookmarked(item.id)
+                      ? theme.colors.primary
+                      : theme.colors.textSecondary
+                  }
+                />
+              </TouchableOpacity>
+              <TouchableOpacity onPress={handleShare} style={styles.actionIcon}>
+                <Icon
+                  name="share"
+                  set="feather"
+                  size={16}
+                  color={theme.colors.textSecondary}
                 />
               </TouchableOpacity>
             </View>
           </View>
         </View>
-
-        {item.description && (
-          <LinearGradient
-            colors={["#F8FAFC", "#E2E8F0"]}
-            style={styles.readMoreFooter}
-          >
-            <Text style={[styles.description, { color: theme.textSecondary }]}>
-              {item.description.substring(0, 60)}…{" "}
-              <Text style={{ color: "#7C3AED", fontWeight: "600" }}>
-                read more
-              </Text>
-            </Text>
-          </LinearGradient>
-        )}
       </View>
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  wrapper: {
-    marginHorizontal: 12,
-    marginVertical: 8,
-  },
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#E2E8F0",
-    overflow: "hidden",
-  },
-  cardContent: {
-    padding: 16,
-    position: "relative",
-  },
-  thumbnail: {
-    position: "absolute",
-    top: 16,
-    right: 16,
-    width: 48,
-    height: 48,
-    borderRadius: 8,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: "600",
-    lineHeight: 22,
-    marginRight: 64,
-  },
-  subText: {
-    fontSize: 12,
-    marginTop: 4,
-    marginBottom: 12,
-  },
-  binaryRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 12,
-  },
-  binaryBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: "center",
-    borderRadius: 12,
-    marginHorizontal: 4,
-  },
-  binaryBtnText: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  multiContainer: {
-    marginBottom: 12,
-  },
-  multiRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 4,
-  },
-  multiLabel: {
-    flex: 1,
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  multiRightGroup: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  multiPct: {
-    width: 40,
-    fontSize: 12,
-    textAlign: "center",
-  },
-  multiBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 10,
-    borderRadius: 12,
-    marginLeft: 8,
-  },
-  multiBtnText: {
-    fontSize: 12,
-    fontWeight: "600",
-  },
-  tradersRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  traderInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  traderDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 4,
-  },
-  traderText: {
-    fontSize: 12,
-    marginLeft: 4,
-  },
-  volume: {
-    fontSize: 12,
-  },
-  footerActions: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  actionIcon: {
-    marginLeft: 12,
-  },
-  readMoreFooter: {
-    borderTopWidth: 1,
-    borderTopColor: "#E2E8F0",
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomLeftRadius: 16,
-    borderBottomRightRadius: 16,
-  },
-  description: {
-    fontSize: 12,
-    lineHeight: 16,
-  },
-});

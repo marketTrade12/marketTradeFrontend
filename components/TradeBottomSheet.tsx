@@ -1,8 +1,7 @@
 // components/TradeBottomSheet.tsx
 import Icon from "@/components/ui/Icon";
-import { Colors } from "@/constants/Colors";
 import { marketData } from "@/constants/data";
-import { useColorScheme } from "@/hooks/useColorScheme";
+import { useTheme } from "@/hooks/useThemeColor";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -30,8 +29,7 @@ type Props = {
 
 const TradeBottomSheet = forwardRef<BottomSheetModal, Props>(
   ({ detailId, optionLabel, actionType, onClose }, ref) => {
-    const colorScheme = useColorScheme();
-    const theme = Colors[colorScheme ?? "light"];
+    const theme = useTheme();
     const router = useRouter();
 
     const internalRef = useRef<BottomSheetModal>(null);
@@ -136,100 +134,277 @@ const TradeBottomSheet = forwardRef<BottomSheetModal, Props>(
       setShowDepositView(true);
     };
 
-    const renderDepositView = () => (
-      <View style={styles.depositContainer}>
-        <View style={styles.depositHeader}>
-          <TouchableOpacity
-            style={[
-              styles.tab,
-              selectedOption === "Yes"
-                ? styles.yesTabActive
-                : styles.tabInactive,
-            ]}
-            disabled
-          >
-            <Text
-              style={[
-                styles.tabText,
-                selectedOption === "Yes"
-                  ? styles.yesTabTextActive
-                  : styles.tabTextInactive,
-              ]}
-            >
-              Yes
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.tab,
-              selectedOption === "No" ? styles.noTabActive : styles.tabInactive,
-            ]}
-            disabled
-          >
-            <Text
-              style={[
-                styles.tabText,
-                selectedOption === "No"
-                  ? styles.noTabTextActive
-                  : styles.tabTextInactive,
-              ]}
-            >
-              No
-            </Text>
-          </TouchableOpacity>
+    const handleContinuePressed = () => {
+      router.push("/wallet");
+    };
 
-          <View style={styles.marketInfoContainer}>
-            <Icon name="info" set="material" size={16} color={theme.text} />
-            <Text style={styles.marketText}>Market ↓</Text>
-          </View>
-        </View>
-
-        <View style={styles.marketSection}>
-          <Text style={styles.marketTitle}>{marketInfo.title}</Text>
-          <Image
-            source={{ uri: marketInfo.imageUrl }}
-            style={styles.marketImage}
-          />
-        </View>
-
-        <View style={styles.priceInfoContainer}>
-          <View style={styles.priceRow}>
-            <Text style={styles.priceText}>
-              Yes Current Price: ₹ {marketInfo.yesPrice}
-            </Text>
-            <Text style={styles.getAmountText}>Get ₹ 10</Text>
-          </View>
-          <View style={styles.priceRow}>
-            <Text style={styles.priceText}>
-              No Current Price: ₹ {marketInfo.noPrice}
-            </Text>
-            <Text style={styles.getAmountText}>Get ₹ 10</Text>
-          </View>
-        </View>
-
-        <View style={styles.addAmountContainer}>
-          <Text style={styles.addAmountLabel}>Add Amount</Text>
-          <Text style={styles.amountText}>₹ {depositAmount}</Text>
-          <Text style={styles.returnText}>Get 💰 ₹2500</Text>
-        </View>
-
-        <View style={styles.balanceContainer}>
-          <Text style={styles.balanceText}>Available Balance: ₹ 000</Text>
-          <Icon name="info" set="material" size={16} color="#9CA3AF" />
-        </View>
-
-        <TouchableOpacity
-          style={styles.depositButton}
-          onPress={() => router.push("/wallet")}
-        >
-          <Text style={styles.depositButtonText}>Deposit</Text>
-        </TouchableOpacity>
-
-        <Text style={styles.termsText}>
-          By proceeding, you agree to the{" "}
-          <Text style={styles.termsLink}>Terms & Condition</Text>.
-        </Text>
-      </View>
+    // Add dynamic styles here to use theme
+    const dynamicStyles = useMemo(
+      () =>
+        StyleSheet.create({
+          container: {
+            backgroundColor: theme.colors.background,
+            paddingHorizontal: theme.spacing.lg,
+            paddingBottom: theme.spacing.xl + bottomInset,
+          },
+          header: {
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            marginBottom: theme.spacing.lg,
+          },
+          questionContainer: {
+            flexDirection: "row",
+            alignItems: "center",
+            flex: 1,
+            marginRight: theme.spacing.md,
+          },
+          questionText: {
+            fontSize: theme.typography.body1.fontSize,
+            fontFamily: theme.typography.body1.fontFamily,
+            color: theme.colors.text,
+            flex: 1,
+            marginLeft: theme.spacing.sm,
+          },
+          closeButton: {
+            padding: theme.spacing.xs,
+          },
+          selectionContainer: {
+            marginBottom: theme.spacing.lg,
+          },
+          selectionTitle: {
+            fontSize: theme.typography.subHeading.fontSize,
+            fontFamily: theme.typography.subHeading.fontFamily,
+            fontWeight: theme.typography.subHeading.fontWeight,
+            color: theme.colors.text,
+            marginBottom: theme.spacing.md,
+            textAlign: "center",
+          },
+          optionButtons: {
+            flexDirection: "row",
+            backgroundColor: theme.colors.surface,
+            borderRadius: theme.borderRadius.lg,
+            padding: theme.spacing.xs,
+          },
+          optionButton: {
+            flex: 1,
+            paddingVertical: theme.spacing.md,
+            alignItems: "center",
+            borderRadius: theme.borderRadius.md,
+          },
+          selectedOption: {
+            backgroundColor: theme.colors.cardBackground,
+            ...theme.shadows.small,
+          },
+          optionText: {
+            fontSize: theme.typography.body1.fontSize,
+            fontFamily: theme.typography.body1.fontFamily,
+            color: theme.colors.text,
+            fontWeight: "500",
+          },
+          selectedOptionText: {
+            color: theme.colors.primary,
+            fontWeight: "600",
+          },
+          priceContainer: {
+            marginBottom: theme.spacing.lg,
+          },
+          priceHeader: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: theme.spacing.md,
+          },
+          priceTitle: {
+            fontSize: theme.typography.subHeading.fontSize,
+            fontFamily: theme.typography.subHeading.fontFamily,
+            fontWeight: theme.typography.subHeading.fontWeight,
+            color: theme.colors.text,
+          },
+          infoIcon: {
+            marginLeft: theme.spacing.xs,
+          },
+          priceControls: {
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            backgroundColor: theme.colors.surface,
+            borderRadius: theme.borderRadius.md,
+            padding: theme.spacing.md,
+          },
+          priceButton: {
+            width: 40,
+            height: 40,
+            borderRadius: theme.borderRadius.sm,
+            backgroundColor: theme.colors.cardBackground,
+            alignItems: "center",
+            justifyContent: "center",
+            ...theme.shadows.small,
+          },
+          priceValue: {
+            fontSize: theme.typography.h3.fontSize,
+            fontFamily: theme.typography.h3.fontFamily,
+            fontWeight: theme.typography.h3.fontWeight,
+            color: theme.colors.text,
+          },
+          quantityContainer: {
+            marginBottom: theme.spacing.lg,
+          },
+          quantityHeader: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: theme.spacing.md,
+          },
+          quantityTitle: {
+            fontSize: theme.typography.subHeading.fontSize,
+            fontFamily: theme.typography.subHeading.fontFamily,
+            fontWeight: theme.typography.subHeading.fontWeight,
+            color: theme.colors.text,
+          },
+          quantityControls: {
+            flexDirection: "row",
+            alignItems: "center",
+            justifyContent: "space-between",
+            backgroundColor: theme.colors.surface,
+            borderRadius: theme.borderRadius.md,
+            padding: theme.spacing.md,
+          },
+          quantityButton: {
+            width: 40,
+            height: 40,
+            borderRadius: theme.borderRadius.sm,
+            backgroundColor: theme.colors.cardBackground,
+            alignItems: "center",
+            justifyContent: "center",
+            ...theme.shadows.small,
+          },
+          quantityValue: {
+            fontSize: theme.typography.h3.fontSize,
+            fontFamily: theme.typography.h3.fontFamily,
+            fontWeight: theme.typography.h3.fontWeight,
+            color: theme.colors.text,
+          },
+          summaryContainer: {
+            backgroundColor: theme.colors.surface,
+            borderRadius: theme.borderRadius.md,
+            padding: theme.spacing.lg,
+            marginBottom: theme.spacing.lg,
+          },
+          summaryRow: {
+            flexDirection: "row",
+            justifyContent: "space-between",
+            marginBottom: theme.spacing.sm,
+          },
+          summaryLabel: {
+            fontSize: theme.typography.body1.fontSize,
+            fontFamily: theme.typography.body1.fontFamily,
+            color: theme.colors.textSecondary,
+          },
+          summaryValue: {
+            fontSize: theme.typography.body1.fontSize,
+            fontFamily: theme.typography.body1.fontFamily,
+            color: theme.colors.text,
+            fontWeight: "500",
+          },
+          totalRow: {
+            borderTopWidth: 1,
+            borderTopColor: theme.colors.border,
+            paddingTop: theme.spacing.sm,
+            marginTop: theme.spacing.sm,
+          },
+          totalLabel: {
+            fontSize: theme.typography.subHeading.fontSize,
+            fontFamily: theme.typography.subHeading.fontFamily,
+            fontWeight: theme.typography.subHeading.fontWeight,
+            color: theme.colors.text,
+          },
+          totalValue: {
+            fontSize: theme.typography.subHeading.fontSize,
+            fontFamily: theme.typography.subHeading.fontFamily,
+            fontWeight: theme.typography.subHeading.fontWeight,
+            color: theme.colors.success,
+          },
+          buyButton: {
+            borderRadius: theme.borderRadius.md,
+            paddingVertical: theme.spacing.md,
+            alignItems: "center",
+            marginBottom: theme.spacing.md,
+          },
+          buyButtonText: {
+            fontSize: theme.typography.button.fontSize,
+            fontFamily: theme.typography.button.fontFamily,
+            fontWeight: theme.typography.button.fontWeight,
+            color: theme.colors.textInverse,
+          },
+          termsText: {
+            fontSize: theme.typography.body2.fontSize,
+            fontFamily: theme.typography.body2.fontFamily,
+            color: theme.colors.textSecondary,
+            textAlign: "center",
+            lineHeight: 20,
+          },
+          termsLink: {
+            color: theme.colors.primary,
+            textDecorationLine: "underline",
+          },
+          // Deposit view styles
+          depositContainer: {
+            backgroundColor: theme.colors.background,
+            padding: theme.spacing.lg,
+            borderRadius: theme.borderRadius.lg,
+          },
+          depositHeader: {
+            alignItems: "center",
+            marginBottom: theme.spacing.xl,
+          },
+          depositTitle: {
+            fontSize: theme.typography.h3.fontSize,
+            fontFamily: theme.typography.h3.fontFamily,
+            fontWeight: theme.typography.h3.fontWeight,
+            color: theme.colors.text,
+            marginBottom: theme.spacing.sm,
+          },
+          depositSubtitle: {
+            fontSize: theme.typography.body1.fontSize,
+            fontFamily: theme.typography.body1.fontFamily,
+            color: theme.colors.textSecondary,
+            textAlign: "center",
+          },
+          depositAmountContainer: {
+            backgroundColor: theme.colors.surface,
+            borderRadius: theme.borderRadius.md,
+            padding: theme.spacing.lg,
+            alignItems: "center",
+            marginBottom: theme.spacing.xl,
+          },
+          depositAmount: {
+            fontSize: theme.typography.h2.fontSize,
+            fontFamily: theme.typography.h2.fontFamily,
+            fontWeight: theme.typography.h2.fontWeight,
+            color: theme.colors.primary,
+            marginBottom: theme.spacing.sm,
+          },
+          depositLabel: {
+            fontSize: theme.typography.body2.fontSize,
+            fontFamily: theme.typography.body2.fontFamily,
+            color: theme.colors.textSecondary,
+          },
+          continueButton: {
+            backgroundColor: theme.colors.warning,
+            borderRadius: theme.borderRadius.md,
+            paddingVertical: theme.spacing.md,
+            alignItems: "center",
+            marginBottom: theme.spacing.md,
+          },
+          continueButtonText: {
+            fontSize: theme.typography.button.fontSize,
+            fontFamily: theme.typography.button.fontFamily,
+            fontWeight: theme.typography.button.fontWeight,
+            color: theme.colors.textInverse,
+          },
+        }),
+      [theme, bottomInset]
     );
 
     return (
@@ -237,44 +412,60 @@ const TradeBottomSheet = forwardRef<BottomSheetModal, Props>(
         ref={internalRef}
         index={0}
         snapPoints={snapPoints}
-        enablePanDownToClose
         backdropComponent={renderBackdrop}
         onChange={onSheetChange}
-        bottomInset={bottomInset}
-        android_keyboardInputMode="adjustResize"
-        handleIndicatorStyle={{
-          backgroundColor: "#000",
-          width: 40,
-        }}
-        backgroundStyle={{
-          backgroundColor: "#E8E8E8",
-        }}
+        backgroundStyle={{ backgroundColor: theme.colors.background }}
+        handleIndicatorStyle={{ backgroundColor: theme.colors.border }}
       >
-        <BottomSheetView
-          style={[styles.container, { backgroundColor: "#E8E8E8" }]}
-        >
-          {showDepositView ? (
-            renderDepositView()
-          ) : (
+        <BottomSheetView style={dynamicStyles.container}>
+          {!showDepositView ? (
             <>
-              {/* Header with Yes/No tabs and Limit dropdown */}
-              <View style={styles.header}>
-                <View style={styles.tabContainer}>
+              {/* Header */}
+              <View style={dynamicStyles.header}>
+                <View style={dynamicStyles.questionContainer}>
+                  <Image
+                    source={{ uri: marketInfo.imageUrl }}
+                    style={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: theme.borderRadius.sm,
+                    }}
+                  />
+                  <Text style={dynamicStyles.questionText} numberOfLines={2}>
+                    {marketInfo.title}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={dynamicStyles.closeButton}
+                  onPress={() => internalRef.current?.close()}
+                >
+                  <Icon
+                    name="x"
+                    set="feather"
+                    size={24}
+                    color={theme.colors.textSecondary}
+                  />
+                </TouchableOpacity>
+              </View>
+
+              {/* Option Selection */}
+              <View style={dynamicStyles.selectionContainer}>
+                <Text style={dynamicStyles.selectionTitle}>
+                  Choose your prediction
+                </Text>
+                <View style={dynamicStyles.optionButtons}>
                   <TouchableOpacity
                     style={[
-                      styles.tab,
-                      selectedOption === "Yes"
-                        ? styles.yesTabActive
-                        : styles.tabInactive,
+                      dynamicStyles.optionButton,
+                      selectedOption === "Yes" && dynamicStyles.selectedOption,
                     ]}
                     onPress={() => setSelectedOption("Yes")}
                   >
                     <Text
                       style={[
-                        styles.tabText,
-                        selectedOption === "Yes"
-                          ? styles.yesTabTextActive
-                          : styles.tabTextInactive,
+                        dynamicStyles.optionText,
+                        selectedOption === "Yes" &&
+                          dynamicStyles.selectedOptionText,
                       ]}
                     >
                       Yes
@@ -282,154 +473,181 @@ const TradeBottomSheet = forwardRef<BottomSheetModal, Props>(
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[
-                      styles.tab,
-                      selectedOption === "No"
-                        ? styles.noTabActive
-                        : styles.tabInactive,
+                      dynamicStyles.optionButton,
+                      selectedOption === "No" && dynamicStyles.selectedOption,
                     ]}
                     onPress={() => setSelectedOption("No")}
                   >
                     <Text
                       style={[
-                        styles.tabText,
-                        selectedOption === "No"
-                          ? styles.noTabTextActive
-                          : styles.tabTextInactive,
+                        dynamicStyles.optionText,
+                        selectedOption === "No" &&
+                          dynamicStyles.selectedOptionText,
                       ]}
                     >
                       No
                     </Text>
                   </TouchableOpacity>
                 </View>
+              </View>
 
-                <View style={styles.limitContainer}>
+              {/* Price */}
+              <View style={dynamicStyles.priceContainer}>
+                <View style={dynamicStyles.priceHeader}>
+                  <Text style={dynamicStyles.priceTitle}>Price per share</Text>
                   <Icon
                     name="info"
                     set="material"
                     size={16}
-                    color={theme.text}
-                  />
-                  <Text style={styles.limitText}>Limit</Text>
-                  <Icon
-                    name="unfold-more"
-                    set="material"
-                    size={16}
-                    color={theme.text}
+                    color={theme.colors.textSecondary}
                   />
                 </View>
-              </View>
-
-              {/* Market Title with Image */}
-              <View style={styles.marketSection}>
-                <Text style={styles.marketTitle}>{marketInfo.title}</Text>
-                <Image
-                  source={{ uri: marketInfo.imageUrl }}
-                  style={styles.marketImage}
-                />
-              </View>
-
-              {/* Current Price */}
-              <View style={styles.currentPriceSection}>
-                <Text style={styles.currentPriceText}>
-                  Yes Current Price: ₹ {marketInfo.yesPrice}
-                </Text>
-                <Text style={styles.currentPriceText}>
-                  No Current Price: ₹ {marketInfo.noPrice}
-                </Text>
-              </View>
-
-              {/* Price Input */}
-              <View style={styles.priceInputContainer}>
-                <View style={styles.inputRow}>
-                  <View style={styles.inputHeader}>
-                    <Text style={styles.minMaxText}>Min: ₹0.5</Text>
-                    <Text style={styles.inputLabel}>Price</Text>
-                    <Text style={styles.minMaxText}>Max: ₹9.5</Text>
-                  </View>
-                  <View style={styles.inputControl}>
-                    <TouchableOpacity
-                      style={styles.controlButton}
-                      onPress={() => handlePriceChange(false)}
-                    >
-                      <Text style={styles.controlButtonText}>-</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.inputValue}>{price.toFixed(2)}</Text>
-                    <TouchableOpacity
-                      style={styles.controlButton}
-                      onPress={() => handlePriceChange(true)}
-                    >
-                      <Text style={styles.controlButtonText}>+</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-
-                {/* Quantity Input */}
-                <View style={styles.inputRow}>
-                  <View style={styles.inputHeader}>
-                    <Text style={styles.minMaxText}>Min: 1</Text>
-                    <Text style={styles.inputLabel}>Quantity</Text>
-                    <Text style={styles.minMaxText}>Max: 10</Text>
-                  </View>
-                  <View style={styles.inputControl}>
-                    <TouchableOpacity
-                      style={styles.controlButton}
-                      onPress={() => handleQuantityChange(false)}
-                    >
-                      <Text style={styles.controlButtonText}>-</Text>
-                    </TouchableOpacity>
-                    <Text style={styles.inputValue}>{quantity}</Text>
-                    <TouchableOpacity
-                      style={styles.controlButton}
-                      onPress={() => handleQuantityChange(true)}
-                    >
-                      <Text style={styles.controlButtonText}>+</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-
-                {/* Total Amount */}
-                <View style={styles.totalAmountSection}>
-                  <Text style={styles.totalAmountLabel}>Total Amount</Text>
-                  <Text style={styles.totalAmountValue}>
-                    ₹ {totalAmount.toFixed(2)}
-                  </Text>
-                </View>
-
-                {/* Potential Return */}
-                <View style={styles.returnSection}>
-                  <Text style={styles.returnLabel}>
-                    Get 💰 ₹{potentialReturn}
-                  </Text>
-                </View>
-
-                {/* Available Balance */}
-                <View style={styles.balanceSection}>
-                  <Text style={styles.balanceText}>
-                    Available Balance: ₹{availableBalance}
-                  </Text>
-                  <Icon name="info" set="material" size={16} color="#9CA3AF" />
-                </View>
-
-                {/* CTA Button or Deposit */}
-                <TouchableOpacity onPress={handleBuyPress}>
-                  <LinearGradient
-                    colors={
-                      selectedOption === "Yes"
-                        ? ["#C4B5FD", "#8B5CF6"]
-                        : ["#86EFAC", "#22C55E"]
-                    }
-                    style={styles.buyButton}
+                <View style={dynamicStyles.priceControls}>
+                  <TouchableOpacity
+                    style={dynamicStyles.priceButton}
+                    onPress={() => handlePriceChange(false)}
                   >
-                    <Text style={styles.buyButtonText}>
-                      Buy {selectedOption}
-                    </Text>
-                  </LinearGradient>
+                    <Icon
+                      name="minus"
+                      set="feather"
+                      size={20}
+                      color={theme.colors.text}
+                    />
+                  </TouchableOpacity>
+                  <Text style={dynamicStyles.priceValue}>
+                    ₹{price.toFixed(1)}
+                  </Text>
+                  <TouchableOpacity
+                    style={dynamicStyles.priceButton}
+                    onPress={() => handlePriceChange(true)}
+                  >
+                    <Icon
+                      name="plus"
+                      set="feather"
+                      size={20}
+                      color={theme.colors.text}
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Quantity */}
+              <View style={dynamicStyles.quantityContainer}>
+                <View style={dynamicStyles.quantityHeader}>
+                  <Text style={dynamicStyles.quantityTitle}>Quantity</Text>
+                </View>
+                <View style={dynamicStyles.quantityControls}>
+                  <TouchableOpacity
+                    style={dynamicStyles.quantityButton}
+                    onPress={() => handleQuantityChange(false)}
+                  >
+                    <Icon
+                      name="minus"
+                      set="feather"
+                      size={20}
+                      color={theme.colors.text}
+                    />
+                  </TouchableOpacity>
+                  <Text style={dynamicStyles.quantityValue}>{quantity}</Text>
+                  <TouchableOpacity
+                    style={dynamicStyles.quantityButton}
+                    onPress={() => handleQuantityChange(true)}
+                  >
+                    <Icon
+                      name="plus"
+                      set="feather"
+                      size={20}
+                      color={theme.colors.text}
+                    />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Summary */}
+              <View style={dynamicStyles.summaryContainer}>
+                <View style={dynamicStyles.summaryRow}>
+                  <Text style={dynamicStyles.summaryLabel}>Total shares</Text>
+                  <Text style={dynamicStyles.summaryValue}>{quantity}</Text>
+                </View>
+                <View style={dynamicStyles.summaryRow}>
+                  <Text style={dynamicStyles.summaryLabel}>
+                    Price per share
+                  </Text>
+                  <Text style={dynamicStyles.summaryValue}>
+                    ₹{price.toFixed(1)}
+                  </Text>
+                </View>
+                <View style={dynamicStyles.summaryRow}>
+                  <Text style={dynamicStyles.summaryLabel}>Total amount</Text>
+                  <Text style={dynamicStyles.summaryValue}>
+                    ₹{totalAmount.toFixed(1)}
+                  </Text>
+                </View>
+                <View
+                  style={[dynamicStyles.summaryRow, dynamicStyles.totalRow]}
+                >
+                  <Text style={dynamicStyles.totalLabel}>Potential return</Text>
+                  <Text style={dynamicStyles.totalValue}>
+                    ₹{potentialReturn}
+                  </Text>
+                </View>
+              </View>
+
+              {/* CTA Button or Deposit */}
+              <TouchableOpacity onPress={handleBuyPress}>
+                <LinearGradient
+                  colors={
+                    selectedOption === "Yes"
+                      ? [theme.colors.success + "CC", theme.colors.success]
+                      : [theme.colors.error + "CC", theme.colors.error]
+                  }
+                  style={dynamicStyles.buyButton}
+                >
+                  <Text style={dynamicStyles.buyButtonText}>
+                    Buy {selectedOption}
+                  </Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              {/* Terms */}
+              <Text style={dynamicStyles.termsText}>
+                By proceeding, you agree to the{" "}
+                <Text style={dynamicStyles.termsLink}>Terms & Condition</Text>.
+              </Text>
+            </>
+          ) : (
+            <>
+              {/* Deposit View */}
+              <View style={dynamicStyles.depositContainer}>
+                <View style={dynamicStyles.depositHeader}>
+                  <Text style={dynamicStyles.depositTitle}>
+                    Deposit Required
+                  </Text>
+                  <Text style={dynamicStyles.depositSubtitle}>
+                    You need to add funds to complete this trade
+                  </Text>
+                </View>
+
+                <View style={dynamicStyles.depositAmountContainer}>
+                  <Text style={dynamicStyles.depositAmount}>
+                    ₹{depositAmount}
+                  </Text>
+                  <Text style={dynamicStyles.depositLabel}>
+                    Minimum deposit required
+                  </Text>
+                </View>
+
+                <TouchableOpacity
+                  style={dynamicStyles.continueButton}
+                  onPress={handleContinuePressed}
+                >
+                  <Text style={dynamicStyles.continueButtonText}>
+                    Continue to Deposit
+                  </Text>
                 </TouchableOpacity>
 
-                {/* Terms */}
-                <Text style={styles.termsText}>
-                  By proceeding, you agree to the{" "}
-                  <Text style={styles.termsLink}>Terms & Condition</Text>.
+                <Text style={dynamicStyles.termsText}>
+                  Secure payment powered by Razorpay
                 </Text>
               </View>
             </>
@@ -441,291 +659,5 @@ const TradeBottomSheet = forwardRef<BottomSheetModal, Props>(
 );
 
 TradeBottomSheet.displayName = "TradeBottomSheet";
-
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    backgroundColor: "#E8E8E8",
-  },
-  header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  tabContainer: {
-    flexDirection: "row",
-    backgroundColor: "#F3F4F6",
-    borderRadius: 8,
-    padding: 2,
-  },
-  tab: {
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 6,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  tabInactive: {
-    backgroundColor: "transparent",
-  },
-  yesTabActive: {
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#7C3AED",
-  },
-  noTabActive: {
-    backgroundColor: "#FFFFFF",
-    borderWidth: 1,
-    borderColor: "#22C55E",
-  },
-  tabText: {
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  yesTabTextActive: {
-    color: "#7C3AED",
-  },
-  noTabTextActive: {
-    color: "#22C55E",
-  },
-  tabTextInactive: {
-    color: "#6B7280",
-  },
-  limitContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-    borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-  },
-  limitText: {
-    fontSize: 14,
-    fontWeight: "500",
-  },
-  marketSection: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 16,
-    padding: 12,
-  },
-  marketTitle: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: "600",
-    lineHeight: 22,
-  },
-  marketImage: {
-    width: 48,
-    height: 48,
-    borderRadius: 8,
-    marginLeft: 12,
-  },
-  currentPriceSection: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 20,
-  },
-  currentPriceText: {
-    fontSize: 14,
-    color: "#374151",
-  },
-  priceInputContainer: {
-    flex: 1,
-    backgroundColor: "#fff",
-    padding: 15,
-    borderRadius: 16,
-  },
-  inputRow: {
-    marginBottom: 20,
-  },
-  inputHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  minMaxText: {
-    fontSize: 12,
-    color: "#6B7280",
-  },
-  inputLabel: {
-    fontSize: 14,
-    fontWeight: "600",
-    color: "#1F2937",
-  },
-  inputControl: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    backgroundColor: "#F9FAFB",
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderWidth: 1,
-    borderColor: "#E5E7EB",
-  },
-  controlButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: "#E5E7EB",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  controlButtonText: {
-    fontSize: 24,
-    fontWeight: "300",
-    color: "#1F2937",
-    lineHeight: 28,
-  },
-  inputValue: {
-    fontSize: 24,
-    fontWeight: "600",
-    color: "#1F2937",
-  },
-  totalAmountSection: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    paddingVertical: 12,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: "#F3F4F6",
-    marginBottom: 8,
-  },
-  totalAmountLabel: {
-    fontSize: 14,
-    color: "#374151",
-  },
-  totalAmountValue: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#1F2937",
-  },
-  returnSection: {
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  returnLabel: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#16A34A",
-  },
-  balanceSection: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 16,
-    gap: 4,
-  },
-  balanceText: {
-    fontSize: 12,
-    color: "#6B7280",
-  },
-  buyButton: {
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  buyButtonText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#FFFFFF",
-  },
-  termsText: {
-    fontSize: 12,
-    color: "#6B7280",
-    textAlign: "center",
-  },
-  termsLink: {
-    color: "#6D28D9",
-    textDecorationLine: "underline",
-  },
-  depositContainer: {
-    flex: 1,
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    padding: 16,
-  },
-  depositHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  marketInfoContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  marketText: {
-    fontSize: 14,
-    color: "#6B7280",
-    fontWeight: "500",
-  },
-  priceInfoContainer: {
-    marginVertical: 16,
-  },
-  priceRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
-  priceText: {
-    fontSize: 14,
-    color: "#374151",
-  },
-  getAmountText: {
-    fontSize: 14,
-    color: "#374151",
-    fontWeight: "500",
-  },
-  addAmountContainer: {
-    alignItems: "center",
-    marginVertical: 24,
-  },
-  addAmountLabel: {
-    fontSize: 16,
-    color: "#374151",
-    marginBottom: 16,
-  },
-  amountText: {
-    fontSize: 48,
-    fontWeight: "300",
-    color: "#111827",
-    marginBottom: 16,
-  },
-  returnText: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#16A34A",
-  },
-  balanceContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 4,
-    marginBottom: 24,
-  },
-  depositButton: {
-    backgroundColor: "#F59E0B",
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  depositButtonText: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#FFFFFF",
-  },
-});
 
 export default TradeBottomSheet;
